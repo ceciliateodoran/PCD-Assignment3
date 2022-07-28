@@ -1,10 +1,12 @@
 package actor.utils;
 
-public class P2d { 
+import ass01.utils.V2d;
+
+public class P2d {
 
     private double x, y;
 
-    public P2d(double x,double y){
+    public P2d(double x, double y){
         this.x = x;
         this.y = y;
     }
