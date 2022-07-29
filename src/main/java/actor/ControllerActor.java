@@ -10,7 +10,6 @@ import akka.actor.typed.javadsl.Receive;
 public class ControllerActor extends AbstractBehavior<ControllerMsg>{
     private static int totBodies;
     private static int maxIter;
-
     private int bodiesCounter;
     private int iter;
 
