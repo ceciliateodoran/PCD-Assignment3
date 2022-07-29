@@ -3,12 +3,13 @@ package actor;
 import akka.actor.typed.ActorRef;
 
 /**
- * Msg che invia il Controller per la nuova iterazione
+ * Msg che invia il PositionActor con la nuova posizione calcolata
  */
-public class ComputePositionMsg implements BodyMsg {
+public class UpdatePositionMsg implements BodyMsg {
+
     private ActorRef replyTo;
 
-    public ComputePositionMsg(ActorRef replyTo) {
+    public UpdatePositionMsg(ActorRef replyTo) {
         this.replyTo = replyTo;
     }
 

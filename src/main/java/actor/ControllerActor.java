@@ -1,13 +1,12 @@
 package actor;
 
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
-public class ControllerActor extends AbstractBehavior<ControllerMsg>{
+public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private static int totBodies;
     private static int maxIter;
     private int bodiesCounter;
@@ -46,7 +45,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg>{
     }
 
     /* public factory to create the actor */
-
     public static Behavior<ControllerMsg> create(int bodies, int iter) {
         totBodies = bodies;
         maxIter = iter;
