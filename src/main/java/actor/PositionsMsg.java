@@ -11,20 +11,25 @@ import java.util.List;
  * Msg che invia il Body con le nuove posizioni di corpi
  */
 public class PositionsMsg implements ControllerMsg {
-    private List<P2d> positions;
+    private P2d position;
     private ActorRef replyTo;
 
-    public PositionsMsg(ActorRef replyTo) {
+    public PositionsMsg(ActorRef replyTo, P2d pos) {
         this.replyTo = replyTo;
-        this.positions = new ArrayList<>();
+        this.position = pos;
     }
 
-    public List<P2d> getPositions(){
-        return Collections.unmodifiableList(this.positions);
+    /* Costruttore da usare nella GUI per lo start button:
+    *   quando verrà premuto start, bisognerà inviare un messaggio dalla GUI
+    *   al ControllerActor usando questo costruttore in modo tale da indicare
+    *   all'attore di iniziare a comunicare con il BodyActor
+    *  */
+    public PositionsMsg(ActorRef replyTo) {
+
     }
 
-    public void setPositions(List<P2d> newPositions){
-        this.positions = newPositions;
+    public P2d getPosition(){
+        return this.position;
     }
 
     public ActorRef getReplyTo() {
