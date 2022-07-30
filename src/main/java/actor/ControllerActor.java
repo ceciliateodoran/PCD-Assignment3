@@ -14,23 +14,19 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private int bodiesCounter;
 
-    private int iter;
-
-    private ActorRef<BodyMsg> bodyActor;
-
-    private ActorRef<PositionCalculatorMsg> posCalcActor;
-
-    private ActorRef<VelocityCalculatorMsg> velCalcActor;
+    private int currentIter;
 
     public ControllerActor(ActorContext<ControllerMsg> context) {
         super(context);
         this.bodiesCounter = 0;
-        this.iter = 0;
-
-        this.bodyActor = context.spawn(BodyActor.create(totBodies), "bodyActor");
-        this.posCalcActor = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
-        this.velCalcActor = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
+        this.currentIter = 0;
+        context.spawn(BodyActor.create(totBodies), "bodyActor");
+        context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
+        context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
         //creare attore GUI
+
+        // considerare che la GUI, quando viene premuto start, manda un messaggio
+        // PositionsMsg al ControllerActor
     }
 
     @Override
@@ -43,16 +39,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
         this.getContext().getLog().info("newPos");
-
-        if(this.bodiesCounter < this.totBodies && this.iter < this.maxIter){
+        if(this.bodiesCounter < this.totBodies && this.currentIter < this.maxIter){
             //inviare nuova posizione alla GUI
             this.bodiesCounter++;
-        } else if (this.bodiesCounter == this.totBodies && this.iter < this.maxIter){
+        } else if (this.bodiesCounter == this.totBodies && this.currentIter < this.maxIter){
             this.bodiesCounter = 0;
-            this.iter++;
+            this.currentIter++;
             //ricominciare il calcolo
             msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf()));
-        } else if (this.iter == this.maxIter) {
+        } else if (this.currentIter == this.maxIter) {
             //inviare fine iterazioni a GUI
         }
 
@@ -61,6 +56,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onStop(GUIStopMsg msg) {
         this.getContext().getLog().info("setStop");
+        // resetto i bodies
+        msg.getReplyTo().tell(new StopMsg(this.getContext().getSelf()));
         return this;
     }
 
