@@ -7,7 +7,7 @@ import java.math.*;
 public class BodyGenerator {
 	
 	public ArrayList<Body> generateBodies(int nBodies, Boundary bounds) {
-		ArrayList<Body> bodies = new ArrayList<>(); 
+		ArrayList<Body> bodies;
 		Random rand = new Random(System.currentTimeMillis());
 		bodies = new ArrayList<Body>();
 		for (int i = 0; i < nBodies; i++) {

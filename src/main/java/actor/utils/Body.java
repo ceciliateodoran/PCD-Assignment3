@@ -1,11 +1,5 @@
 package actor.utils;
 
-
-import ass01.utils.Boundary;
-import ass01.utils.InfiniteForceException;
-import ass01.utils.P2d;
-import ass01.utils.V2d;
-
 /*
  * This class represents a body
  * 
@@ -15,12 +9,12 @@ public class Body {
 	private static final double REPULSIVE_CONST = 0.01;
 	private static final double FRICTION_CONST = 1;
 	
-    private ass01.utils.P2d pos;
+    private P2d pos;
     private V2d vel;
     private double mass;
     private int id;
     
-    public Body(int id, ass01.utils.P2d pos, V2d vel, double mass){
+    public Body(int id, P2d pos, V2d vel, double mass){
     	this.id = id;
         this.pos = pos;
         this.vel = vel;
@@ -31,7 +25,7 @@ public class Body {
     	return mass;
     }
     
-    public ass01.utils.P2d getPos(){
+    public P2d getPos(){
         return pos;
     }
 
@@ -53,7 +47,7 @@ public class Body {
      * 
      * @param dt time elapsed 
      */
-    public void updatePos(double dt){    	
+    public void updatePos(double dt){
     	pos.sum(new V2d(vel).scalarMul(dt));
     }
 
@@ -148,7 +142,7 @@ public class Body {
     
     @Override
     public Body clone() {    
-        ass01.utils.P2d newPos = new P2d(this.pos.getX(), this.pos.getY());
+        P2d newPos = new P2d(this.pos.getX(), this.pos.getY());
         V2d newVel = new V2d(this.vel.getX(), this.vel.getY());
         
 		return new Body(this.getId(), newPos, newVel, this.getMass());

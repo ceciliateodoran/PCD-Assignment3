@@ -27,7 +27,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.bodiesCounter = 0;
         this.iter = 0;
 
-        this.bodyActor = context.spawn(BodyActor.create(), "bodyActor");
+        this.bodyActor = context.spawn(BodyActor.create(totBodies), "bodyActor");
         this.posCalcActor = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
         this.velCalcActor = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
         //creare attore GUI
@@ -43,19 +43,17 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
         this.getContext().getLog().info("newPos");
+
         if(this.bodiesCounter < this.totBodies && this.iter < this.maxIter){
             //inviare nuova posizione alla GUI
             this.bodiesCounter++;
         } else if (this.bodiesCounter == this.totBodies && this.iter < this.maxIter){
             this.bodiesCounter = 0;
             this.iter++;
-            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf()));
             //ricominciare il calcolo
+            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf()));
         } else if (this.iter == this.maxIter) {
             //inviare fine iterazioni a GUI
-/*            this.bodyActor.tell(new StopMsg(this.getContext().getSelf()));
-            this.velCalcActor.tell(new StopMsg(this.getContext().getSelf()));
-            this.posCalcActor.tell(new StopMsg(this.getContext().getSelf()));*/
         }
 
         return this;

@@ -1,7 +1,5 @@
 package actor.utils;
 
-import ass01.utils.V2d;
-
 public class P2d {
 
     private double x, y;
