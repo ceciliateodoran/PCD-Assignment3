@@ -2,24 +2,12 @@ package actor;
 
 import akka.actor.typed.ActorRef;
 
-/**
- * Msg che invia la GUI per fermare gli attori
- */
-public class StopMsg implements ControllerMsg {
-    private Boolean stop;
+public class StopMsg implements BodyMsg, PositionCalculatorMsg, VelocityCalculatorMsg{
+
     private ActorRef replyTo;
 
     public StopMsg(ActorRef replyTo) {
         this.replyTo = replyTo;
-        this.stop = false;
-    }
-
-    public void setStop(Boolean stopMsg){
-        this.stop = stopMsg;
-    }
-
-    public Boolean isStopped(){
-        return this.stop;
     }
 
     public ActorRef getReplyTo() {

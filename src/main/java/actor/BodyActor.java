@@ -22,6 +22,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return newReceiveBuilder()
                 .onMessage(ComputePositionMsg.class, this::onNewIteration)
                 .onMessage(UpdatePositionMsg.class, this::onNewPosition)
+                .onMessage(StopMsg.class, this::onStop)
                 .build();
     }
 
@@ -33,6 +34,11 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     /* aggiorna i valori delle nuove posizioni calcolate dal PositionCalculator */
     private Behavior<BodyMsg> onNewPosition(UpdatePositionMsg msg) {
         return this;
+    }
+
+    private Behavior<BodyMsg> onStop(StopMsg msg) {
+        this.getContext().getLog().info("stopMsg");
+        return Behaviors.stopped();
     }
 
     /* public factory to create the actor */
