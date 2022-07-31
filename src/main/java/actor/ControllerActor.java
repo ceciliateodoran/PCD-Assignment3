@@ -29,9 +29,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     public ControllerActor(ActorContext<ControllerMsg> context) {
         super(context);
-        this.bodiesCounter = 0;
-        this.currentIter = 0;
         this.dt = 0.001;
+        resetCounters();
         createActors(context);
         context.getSelf().tell(new PositionsMsg(this.bodyActorRef));
         // considerare che la GUI, quando viene premuto start, manda un messaggio
@@ -54,14 +53,18 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
-        this.getContext().getLog().info("newPos");
-        if (this.currentIter < this.maxIter){
+        this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
+        if (this.bodiesCounter < totBodies && this.currentIter < maxIter) {
             //inviare nuova posizione alla GUI
+            this.bodiesCounter++;
+        } else if (this.bodiesCounter == totBodies && this.currentIter < maxIter) {
+            this.bodiesCounter = 0;
             this.vt += this.dt;
             this.currentIter++;
             //ricominciare il calcolo
             this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef,
                     this.velCalcActorRef, this.dt));
+
         } else if (this.currentIter == this.maxIter) {
             //inviare fine iterazioni a GUI
         }
@@ -70,10 +73,16 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onStop(GUIStopMsg msg) {
-        this.getContext().getLog().info("setStop");
+        this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
+        resetCounters();
         // resetto i bodies
         this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
         return this;
+    }
+
+    private void resetCounters() {
+        this.bodiesCounter = 0;
+        this.currentIter = 0;
     }
 
     /* public factory to create the actor */
