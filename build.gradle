@@ -14,13 +14,17 @@ def versions = [
 ]
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 
     implementation platform("com.typesafe.akka:akka-bom_${versions.ScalaBinary}:2.6.19")
 
     implementation "com.typesafe.akka:akka-actor-typed_${versions.ScalaBinary}"
     testImplementation "com.typesafe.akka:akka-actor-testkit-typed_${versions.ScalaBinary}"
+
+    /* for logging */
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
 }
 
 test {
