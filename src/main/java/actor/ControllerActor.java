@@ -16,17 +16,30 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private int currentIter;
 
+    private double vt;
+
+    /* virtual time step */
+    private final double dt;
+
+    private ActorRef posCalcActorRef;
+
+    private ActorRef velCalcActorRef;
+
     public ControllerActor(ActorContext<ControllerMsg> context) {
         super(context);
         this.bodiesCounter = 0;
         this.currentIter = 0;
-        context.spawn(BodyActor.create(totBodies), "bodyActor");
-        context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
-        context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
-        //creare attore GUI
-
+        this.dt = 0.001;
+        createActors(context);
         // considerare che la GUI, quando viene premuto start, manda un messaggio
         // PositionsMsg al ControllerActor
+    }
+
+    private void createActors(ActorContext<ControllerMsg> context) {
+        context.spawn(BodyActor.create(this.getContext().getSelf(), totBodies), "bodyActor");
+        this.posCalcActorRef = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
+        this.velCalcActorRef = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
+        //creare attore GUI
     }
 
     @Override
@@ -44,9 +57,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             this.bodiesCounter++;
         } else if (this.bodiesCounter == this.totBodies && this.currentIter < this.maxIter){
             this.bodiesCounter = 0;
+            this.vt += this.dt;
             this.currentIter++;
             //ricominciare il calcolo
-            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf()));
+            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef, this.velCalcActorRef, this.dt));
         } else if (this.currentIter == this.maxIter) {
             //inviare fine iterazioni a GUI
         }

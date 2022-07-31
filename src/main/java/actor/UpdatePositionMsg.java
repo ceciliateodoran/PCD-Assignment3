@@ -9,20 +9,16 @@ import akka.actor.typed.ActorRef;
  */
 public class UpdatePositionMsg implements BodyMsg {
 
-    private ActorRef replyTo;
-
     private Body updatedBody;
 
     private int bodyIndex;
 
-    public UpdatePositionMsg(ActorRef replyTo, Body body, int index) {
-        this.replyTo = replyTo;
+    private double dt;
+
+    public UpdatePositionMsg(Body body, int index, double dt) {
         this.updatedBody = body;
         this.bodyIndex = index;
-    }
-
-    public ActorRef getReplyTo() {
-        return this.replyTo;
+        this.dt = dt;
     }
 
     public Body getUpdatedBody() {
@@ -31,5 +27,9 @@ public class UpdatePositionMsg implements BodyMsg {
 
     public int getBodyIndex() {
         return this.bodyIndex;
+    }
+
+    public double getDt() {
+        return this.dt;
     }
 }

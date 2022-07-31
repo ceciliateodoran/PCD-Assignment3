@@ -1,17 +1,33 @@
 package actor;
 
 import actor.utils.Body;
+import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
 
-public class ComputeVelocityMsg implements BodyMsg {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class ComputeVelocityMsg implements VelocityCalculationMsg {
     private ActorRef replyTo;
-    private Body body;
+
+    private ActorRef posActorRef;
+    private Body currentBody;
+    private ArrayList<Body> bodies;
+    private Boundary bounds;
+
     private int index;
 
-    public ComputeVelocityMsg(ActorRef replyTo, Body b, int bodyIndex) {
+    /* virtual time step */
+    private final double dt;
+
+    public ComputeVelocityMsg(ActorRef replyTo, ActorRef posActor, Body b, ArrayList<Body> allBodies, Boundary bounds, double dt) {
         this.replyTo = replyTo;
-        this.body = b;
-        this.index = bodyIndex;
+        this.posActorRef = posActor;
+        this.currentBody = b;
+        this.bodies = allBodies;
+        this.bounds = bounds;
+        this.dt = dt;
     }
 
     public ActorRef getReplyTo() {
@@ -19,10 +35,22 @@ public class ComputeVelocityMsg implements BodyMsg {
     }
 
     public Body getBody() {
-        return this.body;
+        return this.currentBody;
     }
 
-    public int getIndex() {
-        return this.index;
+    public List<Body> getBodies() {
+        return Collections.unmodifiableList(this.bodies);
+    }
+
+    public ActorRef getPosActorRef() {
+        return this.posActorRef;
+    }
+
+    public Boundary getBounds() {
+        return this.bounds;
+    }
+
+    public double getDt() {
+        return this.dt;
     }
 }

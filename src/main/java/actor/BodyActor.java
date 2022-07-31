@@ -1,5 +1,6 @@
 package actor;
 
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -14,7 +15,11 @@ import java.util.ArrayList;
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private static int nBodies;
 
+    private Boundary bounds;
+
     private ArrayList<Body> bodies;
+
+    private static ActorRef ctrlerActorRef;
 
     public BodyActor(ActorContext<BodyMsg> context) {
         super(context);
@@ -34,7 +39,8 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     private Behavior<BodyMsg> onNewIteration(ComputePositionMsg msg) {
         // Invio ogni body al VelocityCalculatorActor
         for (int i = 0; i < bodies.size(); i++) {
-            msg.getReplyTo().tell(new ComputeVelocityMsg(this.getContext().getSelf(), this.bodies.get(i), i));
+            msg.getVelCalcActorRef().tell(new ComputeVelocityMsg(this.getContext().getSelf(), msg.getPosCalcActorRef(),
+                    this.bodies.get(i), this.bodies, this.bounds, msg.getDt()));
         }
         return this;
     }
@@ -45,7 +51,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         // aggiorno la posizione dell'i-esimo body
         this.bodies.set(msg.getBodyIndex(), msg.getUpdatedBody());
         // mando il valore della posizione al ControllerActor
-        msg.getReplyTo().tell(new PositionsMsg(this.getContext().getSelf(), msg.getUpdatedBody().getPos()));
+        ctrlerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), msg.getUpdatedBody().getPos(), msg.getDt()));
         return this;
     }
 
@@ -56,13 +62,14 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     /* public factory to create the actor */
-    public static Behavior<BodyMsg> create(int totBodies) {
+    public static Behavior<BodyMsg> create(ActorRef ctrlerActor, int totBodies) {
+        ctrlerActorRef = ctrlerActor;
         nBodies = totBodies;
         return Behaviors.setup(BodyActor::new);
     }
 
     private void initializeBodies(int totBodies) {
-        Boundary bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
+        this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
         BodyGenerator bg = new BodyGenerator();
         this.bodies = bg.generateBodies(totBodies, bounds);
     }
