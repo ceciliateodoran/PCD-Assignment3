@@ -14,12 +14,9 @@ public class PositionsMsg implements ControllerMsg {
     private P2d position;
     private ActorRef replyTo;
 
-    private double dt;
-
-    public PositionsMsg(ActorRef replyTo, P2d pos, double dt) {
+    public PositionsMsg(ActorRef replyTo, P2d pos) {
         this.replyTo = replyTo;
         this.position = pos;
-        this.dt = dt;
     }
 
     /* Costruttore da usare nella GUI per lo start button:
@@ -37,9 +34,5 @@ public class PositionsMsg implements ControllerMsg {
 
     public ActorRef getReplyTo() {
         return this.replyTo;
-    }
-
-    public double getDt() {
-        return this.dt;
     }
 }

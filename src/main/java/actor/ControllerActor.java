@@ -51,7 +51,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
-        this.getContext().getLog().info("newPos");
+        this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
         if(this.bodiesCounter < this.totBodies && this.currentIter < this.maxIter){
             //inviare nuova posizione alla GUI
             this.bodiesCounter++;
@@ -69,7 +69,9 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onStop(GUIStopMsg msg) {
-        this.getContext().getLog().info("setStop");
+        this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
+        this.bodiesCounter = 0;
+        this.currentIter = 0;
         // resetto i bodies
         msg.getReplyTo().tell(new StopMsg(this.getContext().getSelf()));
         return this;
