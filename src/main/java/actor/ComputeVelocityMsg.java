@@ -4,7 +4,6 @@ import actor.utils.Body;
 import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,7 +12,7 @@ public class ComputeVelocityMsg implements VelocityCalculationMsg {
 
     private ActorRef posActorRef;
     private Body currentBody;
-    private ArrayList<Body> bodies;
+    private List<Body> bodies;
     private Boundary bounds;
 
     private int index;
@@ -21,7 +20,7 @@ public class ComputeVelocityMsg implements VelocityCalculationMsg {
     /* virtual time step */
     private final double dt;
 
-    public ComputeVelocityMsg(ActorRef replyTo, ActorRef posActor, Body b, ArrayList<Body> allBodies, Boundary bounds, double dt) {
+    public ComputeVelocityMsg(ActorRef replyTo, ActorRef posActor, Body b, List<Body> allBodies, Boundary bounds, double dt) {
         this.replyTo = replyTo;
         this.posActorRef = posActor;
         this.currentBody = b;

@@ -10,14 +10,14 @@ import actor.utils.Body;
 import actor.utils.BodyGenerator;
 import actor.utils.Boundary;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private static int nBodies;
 
     private Boundary bounds;
 
-    private ArrayList<Body> bodies;
+    private List<Body> bodies;
 
     private static ActorRef ctrlerActorRef;
 
@@ -37,8 +37,10 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     /* manda messaggio a VelocityCalculator per iniziare a calcolare i nuovi valori */
     private Behavior<BodyMsg> onNewIteration(ComputePositionMsg msg) {
+        System.out.println("onNewIteration");
         // Invio ogni body al VelocityCalculatorActor
         for (int i = 0; i < bodies.size(); i++) {
+            System.out.println("onNewIteration -> iteration n." + i);
             msg.getVelCalcActorRef().tell(new ComputeVelocityMsg(this.getContext().getSelf(), msg.getPosCalcActorRef(),
                     this.bodies.get(i), this.bodies, this.bounds, msg.getDt()));
         }
@@ -51,7 +53,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         // aggiorno la posizione dell'i-esimo body
         this.bodies.set(msg.getBodyIndex(), msg.getUpdatedBody());
         // mando il valore della posizione al ControllerActor
-        ctrlerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), msg.getUpdatedBody().getPos(), msg.getDt()));
+        ctrlerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), this.bodies, msg.getDt()));
         return this;
     }
 

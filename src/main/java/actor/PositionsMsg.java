@@ -1,5 +1,6 @@
 package actor;
 
+import actor.utils.Body;
 import actor.utils.P2d;
 import akka.actor.typed.ActorRef;
 
@@ -11,14 +12,14 @@ import java.util.List;
  * Msg che invia il Body con le nuove posizioni di corpi
  */
 public class PositionsMsg implements ControllerMsg {
-    private P2d position;
+    private List<Body> bodies;
     private ActorRef replyTo;
 
     private double dt;
 
-    public PositionsMsg(ActorRef replyTo, P2d pos, double dt) {
+    public PositionsMsg(ActorRef replyTo, List<Body> allBodies, double dt) {
         this.replyTo = replyTo;
-        this.position = pos;
+        this.bodies = allBodies;
         this.dt = dt;
     }
 
@@ -31,8 +32,8 @@ public class PositionsMsg implements ControllerMsg {
 
     }
 
-    public P2d getPosition(){
-        return this.position;
+    public List<Body> getBodies(){
+        return this.bodies;
     }
 
     public ActorRef getReplyTo() {

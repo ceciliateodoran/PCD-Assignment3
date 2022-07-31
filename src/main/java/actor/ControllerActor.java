@@ -21,6 +21,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     /* virtual time step */
     private final double dt;
 
+    private ActorRef bodyActorRef;
+
     private ActorRef posCalcActorRef;
 
     private ActorRef velCalcActorRef;
@@ -31,12 +33,13 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.currentIter = 0;
         this.dt = 0.001;
         createActors(context);
+        context.getSelf().tell(new PositionsMsg(this.bodyActorRef));
         // considerare che la GUI, quando viene premuto start, manda un messaggio
         // PositionsMsg al ControllerActor
     }
 
     private void createActors(ActorContext<ControllerMsg> context) {
-        context.spawn(BodyActor.create(this.getContext().getSelf(), totBodies), "bodyActor");
+        this.bodyActorRef = context.spawn(BodyActor.create(this.getContext().getSelf(), totBodies), "bodyActor");
         this.posCalcActorRef = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
         this.velCalcActorRef = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
         //creare attore GUI
@@ -52,15 +55,14 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
         this.getContext().getLog().info("newPos");
-        if(this.bodiesCounter < this.totBodies && this.currentIter < this.maxIter){
+        System.out.println("onUpdatePos");
+        if (this.currentIter < this.maxIter){
             //inviare nuova posizione alla GUI
-            this.bodiesCounter++;
-        } else if (this.bodiesCounter == this.totBodies && this.currentIter < this.maxIter){
-            this.bodiesCounter = 0;
             this.vt += this.dt;
             this.currentIter++;
             //ricominciare il calcolo
-            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef, this.velCalcActorRef, this.dt));
+            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef,
+                    this.velCalcActorRef, this.dt));
         } else if (this.currentIter == this.maxIter) {
             //inviare fine iterazioni a GUI
         }
