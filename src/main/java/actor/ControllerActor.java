@@ -55,13 +55,12 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
         this.getContext().getLog().info("newPos");
-        System.out.println("onUpdatePos");
         if (this.currentIter < this.maxIter){
             //inviare nuova posizione alla GUI
             this.vt += this.dt;
             this.currentIter++;
             //ricominciare il calcolo
-            msg.getReplyTo().tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef,
+            this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef,
                     this.velCalcActorRef, this.dt));
         } else if (this.currentIter == this.maxIter) {
             //inviare fine iterazioni a GUI
@@ -73,7 +72,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private Behavior<ControllerMsg> onStop(GUIStopMsg msg) {
         this.getContext().getLog().info("setStop");
         // resetto i bodies
-        msg.getReplyTo().tell(new StopMsg(this.getContext().getSelf()));
+        this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
         return this;
     }
 
