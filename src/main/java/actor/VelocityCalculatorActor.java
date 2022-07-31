@@ -24,7 +24,6 @@ public class VelocityCalculatorActor extends AbstractBehavior<VelocityCalculatio
     }
 
     private Behavior<VelocityCalculationMsg> onComputeVelocity(ComputeVelocityMsg msg) {
-        this.getContext().getLog().info("VelocityCalculatorActor: velocity's computation message received from BodyActor.");
         /* compute total force on bodies */
         V2d totalForce = computeTotalForceOnBody(msg.getBody(), msg.getBodies());
 
