@@ -37,7 +37,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     /* manda messaggio a VelocityCalculator per iniziare a calcolare i nuovi valori */
     private Behavior<BodyMsg> onNewIteration(ComputePositionMsg msg) {
-        System.out.println("onNewIteration");
+        this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
         // Invio ogni body al VelocityCalculatorActor
         for (int i = 0; i < bodies.size(); i++) {
             System.out.println("onNewIteration -> iteration n." + i);
@@ -50,6 +50,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     /* aggiorna i valori delle nuove posizioni calcolate dal PositionCalculator e manda
     * i risultati al ControllerActor */
     private Behavior<BodyMsg> onNewPosition(UpdatePositionMsg msg) {
+        this.getContext().getLog().info("BodyActor: updated position message received from PositionCalculatorActor.");
         // aggiorno la posizione dell'i-esimo body
         this.bodies.set(msg.getBodyIndex(), msg.getUpdatedBody());
         // mando il valore della posizione al ControllerActor
@@ -58,7 +59,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     private Behavior<BodyMsg> onStop(StopMsg msg) {
-        this.getContext().getLog().info("stopMsg");
+        this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
         initializeBodies(nBodies); // resetto i bodies a dei nuovi valori (per un eventuale re-start)
         return this; // Behaviors.stopped();
     }

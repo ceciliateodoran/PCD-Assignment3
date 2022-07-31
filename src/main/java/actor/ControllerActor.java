@@ -32,7 +32,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.dt = 0.001;
         resetCounters();
         createActors(context);
-        context.getSelf().tell(new PositionsMsg(this.bodyActorRef));
         // considerare che la GUI, quando viene premuto start, manda un messaggio
         // PositionsMsg al ControllerActor
     }
@@ -41,6 +40,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.bodyActorRef = context.spawn(BodyActor.create(this.getContext().getSelf(), totBodies), "bodyActor");
         this.posCalcActorRef = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
         this.velCalcActorRef = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
+        // invio il messaggio di start al BodyActor
+        this.bodyActorRef.tell(new ComputePositionMsg(context.getSelf(), this.posCalcActorRef, this.velCalcActorRef, this.dt));
         //creare attore GUI
     }
 
@@ -54,19 +55,23 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
         this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
+        System.out.println("bodiesCounter: " + this.bodiesCounter);
+        System.out.println("currentIter: " + this.currentIter);
         if (this.bodiesCounter < totBodies && this.currentIter < maxIter) {
             //inviare nuova posizione alla GUI
             this.bodiesCounter++;
-        } else if (this.bodiesCounter == totBodies && this.currentIter < maxIter) {
-            this.bodiesCounter = 0;
-            this.vt += this.dt;
-            this.currentIter++;
-            //ricominciare il calcolo
-            this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef,
-                    this.velCalcActorRef, this.dt));
-
-        } else if (this.currentIter == this.maxIter) {
-            //inviare fine iterazioni a GUI
+            if (this.bodiesCounter == totBodies && this.currentIter < maxIter) {
+                this.bodiesCounter = 0;
+                this.vt += this.dt;
+                this.currentIter++;
+                if (this.bodiesCounter == 0 && this.currentIter == this.maxIter) {
+                    //inviare fine iterazioni a GUI
+                } else {
+                    //ricominciare il calcolo
+                    this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.posCalcActorRef,
+                            this.velCalcActorRef, this.dt));
+                }
+            }
         }
 
         return this;
