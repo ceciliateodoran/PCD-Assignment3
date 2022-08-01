@@ -21,7 +21,7 @@ public class PositionCalculatorActor extends AbstractBehavior<PositionCalculatio
     }
 
     private Behavior<PositionCalculationMsg> onComputePosition(final ComputeNewPositionMsg msg) {
-        this.getContext().getLog().info("PositionCalculatorActor: position's computation message received from VelocityCalculatorActor.");
+        //this.getContext().getLog().info("PositionCalculatorActor: position's computation message received from VelocityCalculatorActor.");
         int index = msg.getBodies().indexOf(msg.getCurrentBody());
 
         /* compute bodies new pos */

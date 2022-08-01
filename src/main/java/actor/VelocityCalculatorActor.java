@@ -24,7 +24,7 @@ public class VelocityCalculatorActor extends AbstractBehavior<VelocityCalculatio
     }
 
     private Behavior<VelocityCalculationMsg> onComputeVelocity(final ComputeVelocityMsg msg) {
-        this.getContext().getLog().info("VelocityCalculatorActor: velocity's computation message received from BodyActor.");
+        //this.getContext().getLog().info("VelocityCalculatorActor: velocity's computation message received from BodyActor.");
         /* compute total force on bodies */
         V2d totalForce = computeTotalForceOnBody(msg.getBody(), msg.getBodies());
 
@@ -56,7 +56,7 @@ public class VelocityCalculatorActor extends AbstractBehavior<VelocityCalculatio
                     V2d forceByOtherBody = b.computeRepulsiveForceBy(otherBody);
                     totalForce.sum(forceByOtherBody);
                 } catch (Exception ex) {
-                    System.out.println("Error in force calculation of the body n." + bodies.indexOf(otherBody));
+                    //System.out.println("Error in force calculation of the body n." + bodies.indexOf(otherBody));
                     ex.printStackTrace();
                 }
             }

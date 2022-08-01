@@ -50,7 +50,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     // msg che indica che è stato premuto il bottone start
     private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
-        this.getContext().getLog().info("ViewActor: received start event from GUI.");
+        //this.getContext().getLog().info("ViewActor: received start event from GUI.");
         controllerActorRef.tell(msg);
 
         return this;
@@ -58,7 +58,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     // msg che indica che è stato premuto il bottone stop
     private Behavior<ViewMsg> onStop(final ViewStopMsg msg) {
-        this.getContext().getLog().info("ViewActor: received stop event from GUI.");
+        //this.getContext().getLog().info("ViewActor: received stop event from GUI.");
         controllerActorRef.tell(msg);
 
         return this;

@@ -12,6 +12,8 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
 public class ControllerActor extends AbstractBehavior<ControllerMsg> {
+    private static final int UPDATE_FREQUENCY = 2;
+
     private static int totBodies;
 
     private static int maxIter;
@@ -70,7 +72,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onUpdatePos(final PositionsMsg msg) {
-        this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
+        //this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
         // Debug
         // System.out.println("bodiesCounter: " + this.bodiesCounter);
         // System.out.println("currentIter: " + this.currentIter);
@@ -81,7 +83,11 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
                 this.bodiesCounter = 0;
                 this.vt += this.dt;
                 this.currentIter++;
-                this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
+
+                if(this.currentIter % UPDATE_FREQUENCY == 0){
+                    this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
+                }
+
                 if (this.currentIter == maxIter) {
                     // reset
                     resetCounters();
@@ -100,7 +106,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
-        this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
+        //this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
         resetCounters();
         // reset dei bodies
         this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
