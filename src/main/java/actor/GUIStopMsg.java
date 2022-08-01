@@ -9,12 +9,12 @@ public class GUIStopMsg implements ControllerMsg {
     private Boolean stop;
     private ActorRef replyTo;
 
-    public GUIStopMsg(ActorRef replyTo) {
+    public GUIStopMsg(final ActorRef replyTo) {
         this.replyTo = replyTo;
         this.stop = false;
     }
 
-    public void setStop(Boolean stopMsg){
+    public void setStop(final Boolean stopMsg){
         this.stop = stopMsg;
     }
 

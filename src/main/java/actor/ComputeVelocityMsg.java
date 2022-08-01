@@ -9,16 +9,20 @@ import java.util.List;
 
 public class ComputeVelocityMsg implements VelocityCalculationMsg {
     private final ActorRef<BodyMsg> replyTo;
+
     private final ActorRef<PositionCalculationMsg> posActorRef;
+
     private final Body currentBody;
+
     private final List<Body> bodies;
+
     private final Boundary bounds;
 
     /* virtual time step */
     private final double dt;
 
-    public ComputeVelocityMsg(ActorRef<BodyMsg> replyTo, ActorRef<PositionCalculationMsg> posActor,
-                              Body b, List<Body> allBodies, Boundary bounds, double dt) {
+    public ComputeVelocityMsg(final ActorRef<BodyMsg> replyTo, final ActorRef<PositionCalculationMsg> posActor,
+                              final Body b, final List<Body> allBodies, final Boundary bounds, final double dt) {
         this.replyTo = replyTo;
         this.posActorRef = posActor;
         this.currentBody = b;

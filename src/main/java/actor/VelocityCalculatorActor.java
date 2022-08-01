@@ -12,7 +12,7 @@ import java.util.List;
 
 public class VelocityCalculatorActor extends AbstractBehavior<VelocityCalculationMsg> {
 
-    public VelocityCalculatorActor(ActorContext<VelocityCalculationMsg> context) {
+    public VelocityCalculatorActor(final ActorContext<VelocityCalculationMsg> context) {
         super(context);
     }
 
@@ -23,7 +23,7 @@ public class VelocityCalculatorActor extends AbstractBehavior<VelocityCalculatio
                 .build();
     }
 
-    private Behavior<VelocityCalculationMsg> onComputeVelocity(ComputeVelocityMsg msg) {
+    private Behavior<VelocityCalculationMsg> onComputeVelocity(final ComputeVelocityMsg msg) {
         this.getContext().getLog().info("VelocityCalculatorActor: velocity's computation message received from BodyActor.");
         /* compute total force on bodies */
         V2d totalForce = computeTotalForceOnBody(msg.getBody(), msg.getBodies());

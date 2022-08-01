@@ -21,7 +21,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private static ActorRef<ControllerMsg> ctrlerActorRef;
 
-    public BodyActor(ActorContext<BodyMsg> context) {
+    public BodyActor(final ActorContext<BodyMsg> context) {
         super(context);
         initializeBodies(nBodies);
     }
@@ -36,10 +36,10 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     /* manda messaggio a VelocityCalculator per iniziare a calcolare i nuovi valori */
-    private Behavior<BodyMsg> onNewIteration(ComputePositionMsg msg) {
+    private Behavior<BodyMsg> onNewIteration(final ComputePositionMsg msg) {
         this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
         // Invio ogni body al VelocityCalculatorActor
-        for (int i = 0; i < bodies.size(); i++) {
+        for (int i = 0; i < this.bodies.size(); i++) {
             // System.out.println("onNewIteration -> iteration n." + i);    // debug
             msg.getVelCalcActorRef().tell(new ComputeVelocityMsg(this.getContext().getSelf(), msg.getPosCalcActorRef(),
                     this.bodies.get(i), this.bodies, this.bounds, msg.getDt()));
@@ -49,31 +49,31 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     /* aggiorna i valori delle nuove posizioni calcolate dal PositionCalculator e manda
     * i risultati al ControllerActor */
-    private Behavior<BodyMsg> onNewPosition(UpdatePositionMsg msg) {
+    private Behavior<BodyMsg> onNewPosition(final UpdatePositionMsg msg) {
         this.getContext().getLog().info("BodyActor: updated position message received from PositionCalculatorActor.");
         // aggiorno la posizione dell'i-esimo body
         this.bodies.set(msg.getBodyIndex(), msg.getUpdatedBody());
         // mando il valore della posizione al ControllerActor
-        ctrlerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), this.bodies, msg.getDt()));
+        this.ctrlerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), this.bodies, msg.getDt()));
         return this;
     }
 
-    private Behavior<BodyMsg> onStop(StopMsg msg) {
+    private Behavior<BodyMsg> onStop(final StopMsg msg) {
         this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
         initializeBodies(nBodies); // resetto i bodies a dei nuovi valori (per un eventuale re-start)
         return this; // Behaviors.stopped();
     }
 
     /* public factory to create the actor */
-    public static Behavior<BodyMsg> create(ActorRef<ControllerMsg> ctrlerActor, int totBodies) {
+    public static Behavior<BodyMsg> create(final ActorRef<ControllerMsg> ctrlerActor, final int totBodies) {
         ctrlerActorRef = ctrlerActor;
         nBodies = totBodies;
         return Behaviors.setup(BodyActor::new);
     }
 
-    private void initializeBodies(int totBodies) {
+    private void initializeBodies(final int totBodies) {
         this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
         BodyGenerator bg = new BodyGenerator();
-        this.bodies = bg.generateBodies(totBodies, bounds);
+        this.bodies = bg.generateBodies(totBodies, this.bounds);
     }
 }

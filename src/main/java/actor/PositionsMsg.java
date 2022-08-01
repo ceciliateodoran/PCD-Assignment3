@@ -10,11 +10,12 @@ import java.util.List;
  */
 public class PositionsMsg implements ControllerMsg {
     private List<Body> bodies;
+
     private ActorRef<BodyMsg> replyTo;
 
     private double dt;
 
-    public PositionsMsg(ActorRef<BodyMsg> replyTo, List<Body> allBodies, double dt) {
+    public PositionsMsg(final ActorRef<BodyMsg> replyTo, final List<Body> allBodies, final double dt) {
         this.replyTo = replyTo;
         this.bodies = allBodies;
         this.dt = dt;
@@ -25,7 +26,7 @@ public class PositionsMsg implements ControllerMsg {
     *   al ControllerActor usando questo costruttore in modo tale da indicare
     *   all'attore di iniziare a comunicare con il BodyActor
     *  */
-    public PositionsMsg(ActorRef replyTo) {
+    public PositionsMsg(final ActorRef replyTo) {
 
     }
 

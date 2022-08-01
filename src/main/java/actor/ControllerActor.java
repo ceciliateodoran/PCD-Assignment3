@@ -27,7 +27,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private ActorRef<VelocityCalculationMsg> velCalcActorRef;
 
-    public ControllerActor(ActorContext<ControllerMsg> context) {
+    public ControllerActor(final ActorContext<ControllerMsg> context) {
         super(context);
         this.dt = 0.001;
         resetCounters();
@@ -36,7 +36,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         // PositionsMsg al ControllerActor
     }
 
-    private void createActors(ActorContext<ControllerMsg> context) {
+    private void createActors(final ActorContext<ControllerMsg> context) {
         this.bodyActorRef = context.spawn(BodyActor.create(this.getContext().getSelf(), totBodies), "bodyActor");
         this.posCalcActorRef = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
         this.velCalcActorRef = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
@@ -53,7 +53,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
                 .build();
     }
 
-    private Behavior<ControllerMsg> onUpdatePos(PositionsMsg msg) {
+    private Behavior<ControllerMsg> onUpdatePos(final PositionsMsg msg) {
         this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
         // Debug
         // System.out.println("bodiesCounter: " + this.bodiesCounter);
@@ -77,7 +77,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    private Behavior<ControllerMsg> onStop(GUIStopMsg msg) {
+    private Behavior<ControllerMsg> onStop(final GUIStopMsg msg) {
         this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
         resetCounters();
         // resetto i bodies
@@ -91,7 +91,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     /* public factory to create the actor */
-    public static Behavior<ControllerMsg> create(int bodies, int iter) {
+    public static Behavior<ControllerMsg> create(final int bodies, final int iter) {
         totBodies = bodies;
         maxIter = iter;
         return Behaviors.setup(ControllerActor::new);

@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 
 public class PositionCalculatorActor extends AbstractBehavior<PositionCalculationMsg> {
 
-    public PositionCalculatorActor(ActorContext<PositionCalculationMsg> context) {
+    public PositionCalculatorActor(final ActorContext<PositionCalculationMsg> context) {
         super(context);
     }
 
@@ -20,7 +20,7 @@ public class PositionCalculatorActor extends AbstractBehavior<PositionCalculatio
                 .build();
     }
 
-    private Behavior<PositionCalculationMsg> onComputePosition(ComputeNewPositionMsg msg) {
+    private Behavior<PositionCalculationMsg> onComputePosition(final ComputeNewPositionMsg msg) {
         this.getContext().getLog().info("PositionCalculatorActor: position's computation message received from VelocityCalculatorActor.");
         int index = msg.getBodies().indexOf(msg.getCurrentBody());
 

@@ -14,17 +14,18 @@ public class ComputePositionMsg implements BodyMsg {
     /* virtual time step */
     private final double dt;
 
-    public ComputePositionMsg(ActorRef<PositionCalculationMsg> posCalcActor, ActorRef<VelocityCalculationMsg> velCalcActor, double dt) {
+    public ComputePositionMsg(final ActorRef<PositionCalculationMsg> posCalcActor,
+                              final ActorRef<VelocityCalculationMsg> velCalcActor, final double dt) {
         this.posCalcActorRef = posCalcActor;
         this.velCalcActorRef = velCalcActor;
         this.dt = dt;
     }
 
-    public ActorRef getPosCalcActorRef() {
+    public ActorRef<PositionCalculationMsg> getPosCalcActorRef() {
         return this.posCalcActorRef;
     }
 
-    public ActorRef getVelCalcActorRef() {
+    public ActorRef<VelocityCalculationMsg> getVelCalcActorRef() {
         return this.velCalcActorRef;
     }
 

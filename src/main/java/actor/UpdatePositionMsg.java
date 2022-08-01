@@ -13,7 +13,7 @@ public class UpdatePositionMsg implements BodyMsg {
 
     private final double dt;
 
-    public UpdatePositionMsg(Body body, int index, double dt) {
+    public UpdatePositionMsg(final Body body, final int index, final double dt) {
         this.updatedBody = body;
         this.bodyIndex = index;
         this.dt = dt;

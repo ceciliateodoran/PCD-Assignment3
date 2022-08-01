@@ -6,7 +6,7 @@ public class StopMsg implements BodyMsg, PositionCalculationMsg, VelocityCalcula
 
     private final ActorRef<ControllerMsg> replyTo;
 
-    public StopMsg(ActorRef<ControllerMsg> replyTo) {
+    public StopMsg(final ActorRef<ControllerMsg> replyTo) {
         this.replyTo = replyTo;
     }
 
