@@ -50,13 +50,14 @@ public class VelocityCalculatorActor extends AbstractBehavior<VelocityCalculatio
         V2d totalForce = new V2d(0, 0);
 
         /* compute total repulsive force */
-        for (int j = 0; j < bodies.size(); j++) {
-            Body otherBody = bodies.get(j);
+        for (Body otherBody : bodies) {
             if (!b.equals(otherBody)) {
                 try {
                     V2d forceByOtherBody = b.computeRepulsiveForceBy(otherBody);
                     totalForce.sum(forceByOtherBody);
                 } catch (Exception ex) {
+                    System.out.println("Error in force calculation of the body n." + bodies.indexOf(otherBody));
+                    ex.printStackTrace();
                 }
             }
         }

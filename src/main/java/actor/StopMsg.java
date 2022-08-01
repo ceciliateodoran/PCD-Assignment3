@@ -4,13 +4,13 @@ import akka.actor.typed.ActorRef;
 
 public class StopMsg implements BodyMsg, PositionCalculationMsg, VelocityCalculationMsg {
 
-    private ActorRef replyTo;
+    private final ActorRef<ControllerMsg> replyTo;
 
-    public StopMsg(ActorRef replyTo) {
+    public StopMsg(ActorRef<ControllerMsg> replyTo) {
         this.replyTo = replyTo;
     }
 
-    public ActorRef getReplyTo() {
+    public ActorRef<ControllerMsg> getReplyTo() {
         return this.replyTo;
     }
 }

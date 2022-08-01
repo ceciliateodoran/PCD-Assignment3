@@ -8,19 +8,17 @@ import java.util.Collections;
 import java.util.List;
 
 public class ComputeVelocityMsg implements VelocityCalculationMsg {
-    private ActorRef replyTo;
-
-    private ActorRef posActorRef;
-    private Body currentBody;
-    private List<Body> bodies;
-    private Boundary bounds;
-
-    private int index;
+    private final ActorRef<BodyMsg> replyTo;
+    private final ActorRef<PositionCalculationMsg> posActorRef;
+    private final Body currentBody;
+    private final List<Body> bodies;
+    private final Boundary bounds;
 
     /* virtual time step */
     private final double dt;
 
-    public ComputeVelocityMsg(ActorRef replyTo, ActorRef posActor, Body b, List<Body> allBodies, Boundary bounds, double dt) {
+    public ComputeVelocityMsg(ActorRef<BodyMsg> replyTo, ActorRef<PositionCalculationMsg> posActor,
+                              Body b, List<Body> allBodies, Boundary bounds, double dt) {
         this.replyTo = replyTo;
         this.posActorRef = posActor;
         this.currentBody = b;
@@ -29,7 +27,7 @@ public class ComputeVelocityMsg implements VelocityCalculationMsg {
         this.dt = dt;
     }
 
-    public ActorRef getReplyTo() {
+    public ActorRef<BodyMsg> getReplyTo() {
         return this.replyTo;
     }
 
@@ -41,7 +39,7 @@ public class ComputeVelocityMsg implements VelocityCalculationMsg {
         return Collections.unmodifiableList(this.bodies);
     }
 
-    public ActorRef getPosActorRef() {
+    public ActorRef<PositionCalculationMsg> getPosActorRef() {
         return this.posActorRef;
     }
 

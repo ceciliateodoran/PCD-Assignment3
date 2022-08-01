@@ -7,11 +7,11 @@ import actor.utils.Body;
  */
 public class UpdatePositionMsg implements BodyMsg {
 
-    private Body updatedBody;
+    private final Body updatedBody;
 
-    private int bodyIndex;
+    private final int bodyIndex;
 
-    private double dt;
+    private final double dt;
 
     public UpdatePositionMsg(Body body, int index, double dt) {
         this.updatedBody = body;

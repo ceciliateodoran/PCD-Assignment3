@@ -10,11 +10,11 @@ import java.util.List;
  */
 public class PositionsMsg implements ControllerMsg {
     private List<Body> bodies;
-    private ActorRef replyTo;
+    private ActorRef<BodyMsg> replyTo;
 
     private double dt;
 
-    public PositionsMsg(ActorRef replyTo, List<Body> allBodies, double dt) {
+    public PositionsMsg(ActorRef<BodyMsg> replyTo, List<Body> allBodies, double dt) {
         this.replyTo = replyTo;
         this.bodies = allBodies;
         this.dt = dt;

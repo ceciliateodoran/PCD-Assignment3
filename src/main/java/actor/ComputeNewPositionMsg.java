@@ -8,25 +8,25 @@ import java.util.List;
 
 public class ComputeNewPositionMsg implements PositionCalculationMsg {
 
-    private ActorRef replyTo;
+    private final ActorRef<BodyMsg> replyTo;
 
-    private List<Body> bodies;
+    private final List<Body> bodies;
 
-    private Body currentBody;
+    private final Body currentBody;
 
     private static double dt;
 
-    private Boundary bounds;
+    private final Boundary bounds;
 
-    public ComputeNewPositionMsg(ActorRef replyTo, Body b, List<Body> allBodies, double dt, Boundary bounds) {
+    public ComputeNewPositionMsg(ActorRef<BodyMsg> replyTo, Body b, List<Body> allBodies, double deltaT, Boundary bounds) {
         this.replyTo = replyTo;
         this.currentBody = b;
         this.bodies = allBodies;
-        this.dt = dt;
+        dt = deltaT;
         this.bounds = bounds;
     }
 
-    public ActorRef getReplyTo() {
+    public ActorRef<BodyMsg> getReplyTo() {
         return replyTo;
     }
 
@@ -39,7 +39,7 @@ public class ComputeNewPositionMsg implements PositionCalculationMsg {
     }
 
     public double getDt() {
-        return this.dt;
+        return dt;
     }
 
     public Boundary getBounds() {

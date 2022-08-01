@@ -19,7 +19,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private List<Body> bodies;
 
-    private static ActorRef ctrlerActorRef;
+    private static ActorRef<ControllerMsg> ctrlerActorRef;
 
     public BodyActor(ActorContext<BodyMsg> context) {
         super(context);
@@ -40,7 +40,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
         // Invio ogni body al VelocityCalculatorActor
         for (int i = 0; i < bodies.size(); i++) {
-            System.out.println("onNewIteration -> iteration n." + i);
+            // System.out.println("onNewIteration -> iteration n." + i);    // debug
             msg.getVelCalcActorRef().tell(new ComputeVelocityMsg(this.getContext().getSelf(), msg.getPosCalcActorRef(),
                     this.bodies.get(i), this.bodies, this.bounds, msg.getDt()));
         }
@@ -65,7 +65,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     /* public factory to create the actor */
-    public static Behavior<BodyMsg> create(ActorRef ctrlerActor, int totBodies) {
+    public static Behavior<BodyMsg> create(ActorRef<ControllerMsg> ctrlerActor, int totBodies) {
         ctrlerActorRef = ctrlerActor;
         nBodies = totBodies;
         return Behaviors.setup(BodyActor::new);

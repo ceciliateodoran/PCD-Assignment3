@@ -7,14 +7,14 @@ import akka.actor.typed.ActorRef;
  */
 public class ComputePositionMsg implements BodyMsg {
 
-    private ActorRef posCalcActorRef;
+    private final ActorRef<PositionCalculationMsg> posCalcActorRef;
 
-    private ActorRef velCalcActorRef;
+    private final ActorRef<VelocityCalculationMsg> velCalcActorRef;
 
     /* virtual time step */
     private final double dt;
 
-    public ComputePositionMsg(ActorRef replyTo, ActorRef posCalcActor, ActorRef velCalcActor, double dt) {
+    public ComputePositionMsg(ActorRef<PositionCalculationMsg> posCalcActor, ActorRef<VelocityCalculationMsg> velCalcActor, double dt) {
         this.posCalcActorRef = posCalcActor;
         this.velCalcActorRef = velCalcActor;
         this.dt = dt;
