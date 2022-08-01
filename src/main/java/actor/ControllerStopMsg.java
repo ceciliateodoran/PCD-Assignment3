@@ -1,6 +1,6 @@
 package actor;
 
-import akka.actor.typed.ActorRef;
+import actor.view.ViewMsg;
 
 /**
  * Msg che invia il Controller alla GUI per avvisare che le interazioni sono terminate

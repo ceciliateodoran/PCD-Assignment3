@@ -1,8 +1,5 @@
 package actor.view;
 
-import actor.ViewMsg;
-import actor.ViewStartMsg;
-import actor.ViewStopMsg;
 import actor.utils.Body;
 import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;

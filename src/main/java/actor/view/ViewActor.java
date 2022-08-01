@@ -1,12 +1,14 @@
-package actor;
+package actor.view;
 
+import actor.ControllerMsg;
+import actor.ControllerStopMsg;
+import actor.PositionsMsg;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import actor.utils.SimulationView;
 
 public class ViewActor extends AbstractBehavior<ViewMsg> {
 
@@ -35,7 +37,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     }
 
     // msg mandato da Controller quando sono finite le iterazioni
-    private Behavior<ViewMsg> onEndIterations(final ControllerStopMsg msg) {
+    private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
         this.viewer.updateState("Stopped");
         return this;
     }

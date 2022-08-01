@@ -1,5 +1,9 @@
 package actor;
 
+import actor.view.ViewActor;
+import actor.view.ViewMsg;
+import actor.view.ViewStartMsg;
+import actor.view.ViewStopMsg;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;

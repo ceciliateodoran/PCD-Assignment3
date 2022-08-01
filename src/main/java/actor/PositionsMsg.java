@@ -2,6 +2,7 @@ package actor;
 
 import actor.utils.Body;
 import actor.utils.Boundary;
+import actor.view.ViewMsg;
 import akka.actor.typed.ActorRef;
 
 import java.util.List;

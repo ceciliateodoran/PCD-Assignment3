@@ -1,7 +1,7 @@
-package actor.utils;
+package actor.view;
 
-import actor.ViewMsg;
-import actor.view.VisualizerFrame;
+import actor.utils.Body;
+import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
 
 import javax.swing.*;
