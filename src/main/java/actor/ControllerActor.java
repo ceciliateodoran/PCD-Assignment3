@@ -12,6 +12,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private static int maxIter;
 
+    private static int viewHeight;
+
+    private static int viewWidth;
+
     private int bodiesCounter;
 
     private int currentIter;
@@ -27,30 +31,38 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private ActorRef<VelocityCalculationMsg> velCalcActorRef;
 
+    private ActorRef<ViewMsg> viewActorRef;
+
     public ControllerActor(final ActorContext<ControllerMsg> context) {
         super(context);
         this.dt = 0.001;
         resetCounters();
         createActors(context);
-        // considerare che la GUI, quando viene premuto start, manda un messaggio
-        // PositionsMsg al ControllerActor
     }
 
     private void createActors(final ActorContext<ControllerMsg> context) {
-        this.bodyActorRef = context.spawn(BodyActor.create(this.getContext().getSelf(), totBodies), "bodyActor");
+        this.bodyActorRef = context.spawn(BodyActor.create(context.getSelf(), totBodies), "bodyActor");
         this.posCalcActorRef = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
         this.velCalcActorRef = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
-        // invio il messaggio di start al BodyActor
-        this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
-        //creare attore GUI
+        // invio del messaggio di start al BodyActor (versione NO GUI)
+        // this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
+
+        // creazione della GUI
+        this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
     }
 
     @Override
     public Receive<ControllerMsg> createReceive() {
         return newReceiveBuilder()
                 .onMessage(PositionsMsg.class, this::onUpdatePos)
-                .onMessage(GUIStopMsg.class, this::onStop)
+                .onMessage(ViewStopMsg.class, this::onStop)
+                .onMessage(ViewStartMsg.class, this::onViewStart)
                 .build();
+    }
+
+    private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
+        this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
+        return this;
     }
 
     private Behavior<ControllerMsg> onUpdatePos(final PositionsMsg msg) {
@@ -65,8 +77,14 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
                 this.bodiesCounter = 0;
                 this.vt += this.dt;
                 this.currentIter++;
+                this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
                 if (this.currentIter == maxIter) {
-                    //inviare fine iterazioni a GUI
+                    // reset
+                    resetCounters();
+                    this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
+
+                    //inviare msg di fine iterazioni a GUI
+                    this.viewActorRef.tell(new ControllerStopMsg());
                 } else {
                     //ricominciare il calcolo
                     this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
@@ -77,10 +95,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    private Behavior<ControllerMsg> onStop(final GUIStopMsg msg) {
+    private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
         this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
         resetCounters();
-        // resetto i bodies
+        // reset dei bodies
         this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
         return this;
     }
@@ -88,12 +106,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private void resetCounters() {
         this.bodiesCounter = 0;
         this.currentIter = 0;
+        this.vt = 0;
     }
 
     /* public factory to create the actor */
-    public static Behavior<ControllerMsg> create(final int bodies, final int iter) {
+    public static Behavior<ControllerMsg> create(final int bodies, final int iter, final int w, final int h) {
         totBodies = bodies;
         maxIter = iter;
+        viewHeight = h;
+        viewWidth = w;
         return Behaviors.setup(ControllerActor::new);
     }
 }

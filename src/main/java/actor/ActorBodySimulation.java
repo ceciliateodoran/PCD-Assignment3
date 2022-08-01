@@ -6,10 +6,12 @@ public class ActorBodySimulation {
 
     public static void main(String[] args) {
 
+        int width = 620;
+        int height = 620;
         int totBodies = 100;
-        int maxIter = 100;
+        int maxIter = 1000;
 
-        ActorSystem.create(ControllerActor.create(totBodies, maxIter), "controllerActor");
+        ActorSystem.create(ControllerActor.create(totBodies, maxIter, width, height), "controllerActor");
 
     }
 }

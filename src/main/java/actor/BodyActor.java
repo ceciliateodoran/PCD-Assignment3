@@ -19,7 +19,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private List<Body> bodies;
 
-    private static ActorRef<ControllerMsg> ctrlerActorRef;
+    private static ActorRef<ControllerMsg> controllerActorRef;
 
     public BodyActor(final ActorContext<BodyMsg> context) {
         super(context);
@@ -54,19 +54,20 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         // aggiorno la posizione dell'i-esimo body
         this.bodies.set(msg.getBodyIndex(), msg.getUpdatedBody());
         // mando il valore della posizione al ControllerActor
-        this.ctrlerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), this.bodies, msg.getDt()));
+        this.controllerActorRef.tell(new PositionsMsg(this.getContext().getSelf(), this.bodies, msg.getDt(), this.bounds));
         return this;
     }
 
     private Behavior<BodyMsg> onStop(final StopMsg msg) {
         this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
         initializeBodies(nBodies); // resetto i bodies a dei nuovi valori (per un eventuale re-start)
+
         return this; // Behaviors.stopped();
     }
 
     /* public factory to create the actor */
     public static Behavior<BodyMsg> create(final ActorRef<ControllerMsg> ctrlerActor, final int totBodies) {
-        ctrlerActorRef = ctrlerActor;
+        controllerActorRef = ctrlerActor;
         nBodies = totBodies;
         return Behaviors.setup(BodyActor::new);
     }
