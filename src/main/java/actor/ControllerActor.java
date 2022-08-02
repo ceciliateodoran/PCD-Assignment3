@@ -1,9 +1,6 @@
 package actor;
 
-import actor.view.ViewActor;
-import actor.view.ViewMsg;
-import actor.view.ViewStartMsg;
-import actor.view.ViewStopMsg;
+import actor.view.*;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -22,8 +19,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private static int viewWidth;
 
-    private int bodiesCounter;
-
     private int currentIter;
 
     private double vt;
@@ -32,10 +27,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private final double dt;
 
     private ActorRef<BodyMsg> bodyActorRef;
-
-    private ActorRef<PositionCalculationMsg> posCalcActorRef;
-
-    private ActorRef<VelocityCalculationMsg> velCalcActorRef;
 
     private ActorRef<ViewMsg> viewActorRef;
 
@@ -48,8 +39,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private void createActors(final ActorContext<ControllerMsg> context) {
         this.bodyActorRef = context.spawn(BodyActor.create(context.getSelf(), totBodies), "bodyActor");
-        this.posCalcActorRef = context.spawn(PositionCalculatorActor.create(), "positionCalculatorActor");
-        this.velCalcActorRef = context.spawn(VelocityCalculatorActor.create(), "velocityCalculatorActor");
+
         // invio del messaggio di start al BodyActor (versione NO GUI)
         // this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
 
@@ -62,12 +52,13 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return newReceiveBuilder()
                 .onMessage(PositionsMsg.class, this::onUpdatePos)
                 .onMessage(ViewStopMsg.class, this::onStop)
+                .onMessage(ViewUpdatedMsg.class, this::onViewUpdated)
                 .onMessage(ViewStartMsg.class, this::onViewStart)
                 .build();
     }
 
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
-        this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
+        this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
         return this;
     }
 
@@ -76,32 +67,44 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         // Debug
         // System.out.println("bodiesCounter: " + this.bodiesCounter);
         // System.out.println("currentIter: " + this.currentIter);
-        if (this.bodiesCounter < totBodies && this.currentIter < maxIter) {
-            //inviare nuova posizione alla GUI
-            this.bodiesCounter++;
-            if (this.bodiesCounter == totBodies) {
-                this.bodiesCounter = 0;
-                this.vt += this.dt;
-                this.currentIter++;
+        if (this.currentIter < maxIter) {
+            this.vt += this.dt;
+            this.currentIter++;
 
-                if(this.currentIter % UPDATE_FREQUENCY == 0){
-                    this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
-                }
+            //if(this.currentIter % UPDATE_FREQUENCY == 0){
+            this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
+            //}
 
-                if (this.currentIter == maxIter) {
-                    // reset
-                    resetCounters();
-                    this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
+            /**
+             * No-GUI version
+             */
+            /*if (this.currentIter == maxIter) {
+                // reset
+                resetCounters();
+                this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
 
-                    //inviare msg di fine iterazioni a GUI
-                    this.viewActorRef.tell(new ControllerStopMsg());
-                } else {
-                    //ricominciare il calcolo
-                    this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
-                }
-            }
+                //inviare msg di fine iterazioni a GUI
+                this.viewActorRef.tell(new ControllerStopMsg());
+            } else {
+                //ricominciare il calcolo
+                this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
+            }*/
         }
+        return this;
+    }
 
+    private Behavior<ControllerMsg> onViewUpdated(final ViewUpdatedMsg msg) {
+        if (this.currentIter == maxIter) {
+            // reset
+            resetCounters();
+            this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
+
+            //inviare msg di fine iterazioni a GUI
+            this.viewActorRef.tell(new ControllerStopMsg());
+        } else {
+            //ricominciare il calcolo
+            this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
+        }
         return this;
     }
 
@@ -114,7 +117,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private void resetCounters() {
-        this.bodiesCounter = 0;
         this.currentIter = 0;
         this.vt = 0;
     }

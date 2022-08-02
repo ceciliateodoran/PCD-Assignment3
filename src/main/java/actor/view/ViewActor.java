@@ -45,6 +45,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     // msg mandato da Controller con bodies aggiornati
     private Behavior<ViewMsg> onNewBodies(final PositionsMsg msg) {
         this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
+        controllerActorRef.tell(new ViewUpdatedMsg());
         return this;
     }
 

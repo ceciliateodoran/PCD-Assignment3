@@ -14,14 +14,11 @@ public class ComputeNewPositionMsg implements PositionCalculationMsg {
 
     private final List<Body> bodies;
 
-    private final Body currentBody;
-
     private final Boundary bounds;
 
-    public ComputeNewPositionMsg(final ActorRef<BodyMsg> replyTo, final Body b, final List<Body> allBodies,
+    public ComputeNewPositionMsg(final ActorRef<BodyMsg> replyTo, final List<Body> allBodies,
                                  final double deltaT, final Boundary bounds) {
         this.replyTo = replyTo;
-        this.currentBody = b;
         this.bodies = allBodies;
         this.dt = deltaT;
         this.bounds = bounds;
@@ -33,10 +30,6 @@ public class ComputeNewPositionMsg implements PositionCalculationMsg {
 
     public List<Body> getBodies() {
         return this.bodies;
-    }
-
-    public Body getCurrentBody() {
-        return this.currentBody;
     }
 
     public double getDt() {

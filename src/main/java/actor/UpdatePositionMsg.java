@@ -2,29 +2,24 @@ package actor;
 
 import actor.utils.Body;
 
+import java.util.List;
+
 /**
  * Msg che invia il PositionActor con la nuova posizione calcolata
  */
 public class UpdatePositionMsg implements BodyMsg {
 
-    private final Body updatedBody;
-
-    private final int bodyIndex;
+    private final List<Body> updatedBodies;
 
     private final double dt;
 
-    public UpdatePositionMsg(final Body body, final int index, final double dt) {
-        this.updatedBody = body;
-        this.bodyIndex = index;
+    public UpdatePositionMsg(final List<Body> body, final double dt) {
+        this.updatedBodies = body;
         this.dt = dt;
     }
 
-    public Body getUpdatedBody() {
-        return this.updatedBody;
-    }
-
-    public int getBodyIndex() {
-        return this.bodyIndex;
+    public List<Body> getUpdatedBodies() {
+        return this.updatedBodies;
     }
 
     public double getDt() {
