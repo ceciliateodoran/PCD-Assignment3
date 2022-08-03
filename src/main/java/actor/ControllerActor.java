@@ -70,9 +70,9 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             this.currentIter++;
 
             /* GUI version */
-            //if(this.currentIter % UPDATE_FREQUENCY == 0){
+            if(this.currentIter % UPDATE_FREQUENCY == 0){
                 this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
-            //}
+            }
 
             /* No-GUI version */
             /*if (this.currentIter == maxIter) {
