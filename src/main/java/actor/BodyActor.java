@@ -13,6 +13,9 @@ import akka.actor.typed.javadsl.Receive;
 
 import java.util.List;
 
+/**
+ * attore che si occupa di calcolare i nuovi valori di velocità e posizione di ogni Body
+ */
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private static int nBodies;
 
@@ -22,7 +25,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     public BodyActor(final ActorContext<BodyMsg> context) {
         super(context);
-        initializeBodies(nBodies);
+        this.initializeBodies(nBodies);
     }
 
     @Override
@@ -38,7 +41,6 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         //this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
 
         for (int i = 0; i < this.bodies.size(); i++) {
-            // System.out.println("onNewIteration -> iteration n." + i);    // debug
             Body b = this.bodies.get(i);
 
             /* compute total force on bodies */
@@ -66,7 +68,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return this;
     }
 
-    // reset dei bodies con nuovi valori (per un eventuale re-start)
+    /* reset dei bodies con nuovi valori (per un eventuale re-start) */
     private Behavior<BodyMsg> onStop(final StopMsg msg) {
         //this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
         this.initializeBodies(nBodies);
@@ -74,7 +76,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return this;
     }
 
-    /* public factory to create the actor */
+    /* public factory to create Body actor */
     public static Behavior<BodyMsg> create(final int totBodies) {
         nBodies = totBodies;
         return Behaviors.setup(BodyActor::new);
@@ -87,7 +89,6 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     private V2d computeTotalForceOnBody(final Body b) {
-
         V2d totalForce = new V2d(0, 0);
 
         /* compute total repulsive force */

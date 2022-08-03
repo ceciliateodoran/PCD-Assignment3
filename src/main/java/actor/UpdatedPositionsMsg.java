@@ -8,7 +8,9 @@ import akka.actor.typed.ActorRef;
 import java.util.List;
 
 /**
- * Msg che invia il Body con le nuove posizioni di corpi
+ * messaggio con i nuovi valori dei Bodies calcolati
+ * inviato dal BodyActor al ControllerActor
+ * e dal ControllerActor al ViewActor
  */
 public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
     private List<Body> bodies;
@@ -19,12 +21,13 @@ public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
 
     private Boundary bounds;
 
+    /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ControllerActor */
     public UpdatedPositionsMsg(final List<Body> allBodies, final Boundary bounds) {
         this.bodies = allBodies;
         this.bounds = bounds;
     }
 
-    // Costruttore da usare per l'update della view
+    /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ViewActor */
     public UpdatedPositionsMsg(final List<Body> allBodies, final double vt,
                                final int iter, final Boundary bounds) {
         this.bodies = allBodies;

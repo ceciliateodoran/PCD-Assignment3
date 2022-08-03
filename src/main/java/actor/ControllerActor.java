@@ -8,6 +8,11 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
+/**
+ * attore che crea BodyActor e ViewActor e che si occupa
+ * sia di inviare i nuovi dati calcolati dal BodyActor al ViewActor,
+ * sia di segnalare al BodyActor l'inizio e la terminazione del processo di calcolo
+ */
 public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private static int totBodies;
 
@@ -55,11 +60,13 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
                 .build();
     }
 
+    /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Start */
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
         this.bodyActorRef.tell(new ComputePositionsMsg(this.getContext().getSelf(), this.dt));
         return this;
     }
 
+    /* messaggio ricevuto dal BodyActor quando sono stati calcolati i nuovi valori di velocità e posizione dei Body */
     private Behavior<ControllerMsg> onUpdatePos(final UpdatedPositionsMsg msg) {
         //this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
 
@@ -85,7 +92,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    // msg mandato dalla GUI appena si è aggiornata
+    /* messaggio ricevuto dal ViewActor all'aggiornamento della GUI */
     private Behavior<ControllerMsg> onViewUpdated(final ViewUpdatedMsg msg) {
         if (this.currentIter == maxIter) {
             // reset
@@ -101,6 +108,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
+    /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Stop */
     private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
         //this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
         resetCounters();
@@ -109,7 +117,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    /* public factory to create the actor */
+    /* public factory to create Controller actor */
     public static Behavior<ControllerMsg> create(final int bodies, final int iter, final int w, final int h) {
         totBodies = bodies;
         maxIter = iter;

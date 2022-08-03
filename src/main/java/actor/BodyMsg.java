@@ -1,7 +1,7 @@
 package actor;
 
 /**
- * Msg che può ricevere il Body: dal Controller
+ * messaggi che può ricevere il BodyActor
  */
 public interface BodyMsg {
 

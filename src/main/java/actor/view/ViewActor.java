@@ -10,6 +10,9 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
+/**
+ * attore che si occupa di far visualizzare i valori dei Bodies
+ */
 public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     private static int height;
@@ -39,13 +42,13 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
                 .build();
     }
 
-    // msg mandato da Controller quando sono finite le iterazioni
+    /* aggiornamento GUI al termine delle iterazioni */
     private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
         this.viewer.updateState("Stopped");
         return this;
     }
 
-    // msg mandato da Controller con bodies aggiornati
+    /* aggiornamento dei Bodies nella GUI */
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
         if (state) {
             this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
@@ -54,7 +57,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         return this;
     }
 
-    // msg che indica che è stato premuto il bottone start
+    /* gestione dell'evento Start */
     private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
         //this.getContext().getLog().info("ViewActor: received start event from GUI.");
         controllerActorRef.tell(msg);
@@ -62,7 +65,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         return this;
     }
 
-    // msg che indica che è stato premuto il bottone stop
+    /* gestione dell'evento Stop */
     private Behavior<ViewMsg> onStop(final ViewStopMsg msg) {
         //this.getContext().getLog().info("ViewActor: received stop event from GUI.");
         controllerActorRef.tell(msg);
@@ -70,7 +73,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         return this;
     }
 
-    /* public factory to create the actor */
+    /* public factory to create the View actor */
     public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
         controllerActorRef = actorRef;
         width = w;

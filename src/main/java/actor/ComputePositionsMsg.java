@@ -3,7 +3,8 @@ package actor;
 import akka.actor.typed.ActorRef;
 
 /**
- * Msg che invia il Controller per la nuova iterazione
+ * messaggio che invia il ControllerActor al BodyActor
+ * per far iniziare il nuovo calcolo di velocità e posizione
  */
 public class ComputePositionsMsg implements BodyMsg {
 

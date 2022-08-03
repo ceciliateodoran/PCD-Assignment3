@@ -84,10 +84,12 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 		if (cmd.equals("start")) {
 			switchButtons();
 			this.state.setText("Running");
+			// invio del messaggio di Start al ViewActor
 			this.viewActorRef.tell(new ViewStartMsg());
 		} else if (cmd.equals("stop")) {
 			switchButtons();
 			this.state.setText("Stopped");
+			// invio del messaggio di Stop al ViewActor
 			this.viewActorRef.tell(new ViewStopMsg());
 		}
 	}
