@@ -2,7 +2,7 @@ package actor.view;
 
 import actor.ControllerMsg;
 import actor.ControllerStopMsg;
-import actor.PositionsMsg;
+import actor.UpdatedPositionsMsg;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -34,7 +34,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         return newReceiveBuilder()
                 .onMessage(ViewStartMsg.class, this::onStart)
                 .onMessage(ViewStopMsg.class, this::onStop)
-                .onMessage(PositionsMsg.class, this::onNewBodies)
+                .onMessage(UpdatedPositionsMsg.class, this::onNewBodies)
                 .onMessage(ControllerStopMsg.class, this::onEndIterations)
                 .build();
     }
@@ -46,7 +46,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     }
 
     // msg mandato da Controller con bodies aggiornati
-    private Behavior<ViewMsg> onNewBodies(final PositionsMsg msg) {
+    private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
         if (state) {
             this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
             controllerActorRef.tell(new ViewUpdatedMsg());

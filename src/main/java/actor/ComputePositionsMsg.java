@@ -5,14 +5,14 @@ import akka.actor.typed.ActorRef;
 /**
  * Msg che invia il Controller per la nuova iterazione
  */
-public class ComputePositionMsg implements BodyMsg {
+public class ComputePositionsMsg implements BodyMsg {
 
     private ActorRef replyTo;
 
     /* virtual time step */
     private final double dt;
 
-    public ComputePositionMsg(final ActorRef replyTo, final double dt) {
+    public ComputePositionsMsg(final ActorRef replyTo, final double dt) {
         this.replyTo = replyTo;
         this.dt = dt;
     }

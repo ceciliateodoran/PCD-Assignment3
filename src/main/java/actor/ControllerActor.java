@@ -9,8 +9,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
 public class ControllerActor extends AbstractBehavior<ControllerMsg> {
-    private static final int UPDATE_FREQUENCY = 2;
-
     private static int totBodies;
 
     private static int maxIter;
@@ -38,7 +36,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private void createActors(final ActorContext<ControllerMsg> context) {
-        this.bodyActorRef = context.spawn(BodyActor.create(context.getSelf(), totBodies), "bodyActor");
+        this.bodyActorRef = context.spawn(BodyActor.create(totBodies), "bodyActor");
 
         // invio del messaggio di start al BodyActor (versione NO GUI)
         //this.bodyActorRef.tell(new ComputePositionMsg(context.getSelf(), this.dt));
@@ -50,7 +48,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     @Override
     public Receive<ControllerMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(PositionsMsg.class, this::onUpdatePos)
+                .onMessage(UpdatedPositionsMsg.class, this::onUpdatePos)
                 .onMessage(ViewStopMsg.class, this::onStop)
                 .onMessage(ViewUpdatedMsg.class, this::onViewUpdated)
                 .onMessage(ViewStartMsg.class, this::onViewStart)
@@ -58,11 +56,11 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
-        this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
+        this.bodyActorRef.tell(new ComputePositionsMsg(this.getContext().getSelf(), this.dt));
         return this;
     }
 
-    private Behavior<ControllerMsg> onUpdatePos(final PositionsMsg msg) {
+    private Behavior<ControllerMsg> onUpdatePos(final UpdatedPositionsMsg msg) {
         //this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
 
         if (this.currentIter < maxIter) {
@@ -70,13 +68,11 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             this.currentIter++;
 
             /* GUI version */
-            if(this.currentIter % UPDATE_FREQUENCY == 0){
-                this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
-            }
+            this.viewActorRef.tell(new UpdatedPositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
+
 
             /* No-GUI version */
             /*if (this.currentIter == maxIter) {
-                this.getContext().getLog().info("FINITE ITERAZIONI"); // da eliminare
                 // reset
                 resetCounters();
                 this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
@@ -94,13 +90,13 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         if (this.currentIter == maxIter) {
             // reset
             resetCounters();
-            this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
+            this.bodyActorRef.tell(new StopMsg());
 
             //inviare msg di fine iterazioni a GUI
             this.viewActorRef.tell(new ControllerStopMsg());
         } else {
             //ricominciare il calcolo
-            this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
+            this.bodyActorRef.tell(new ComputePositionsMsg(this.getContext().getSelf(), this.dt));
         }
         return this;
     }
@@ -109,13 +105,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         //this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
         resetCounters();
         // reset dei bodies
-        this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
+        this.bodyActorRef.tell(new StopMsg());
         return this;
-    }
-
-    private void resetCounters() {
-        this.currentIter = 0;
-        this.vt = 0;
     }
 
     /* public factory to create the actor */
@@ -125,5 +116,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         viewHeight = h;
         viewWidth = w;
         return Behaviors.setup(ControllerActor::new);
+    }
+
+    private void resetCounters() {
+        this.currentIter = 0;
+        this.vt = 0;
     }
 }

@@ -20,8 +20,6 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private List<Body> bodies;
 
-    private static ActorRef<ControllerMsg> controllerActorRef;
-
     public BodyActor(final ActorContext<BodyMsg> context) {
         super(context);
         initializeBodies(nBodies);
@@ -30,13 +28,13 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     @Override
     public Receive<BodyMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(ComputePositionMsg.class, this::onNewIteration)
+                .onMessage(ComputePositionsMsg.class, this::onNewIteration)
                 .onMessage(StopMsg.class, this::onStop)
                 .build();
     }
 
     /* calcolo dei nuovi valori di velocità e posizione per ogni Body */
-    private Behavior<BodyMsg> onNewIteration(final ComputePositionMsg msg) {
+    private Behavior<BodyMsg> onNewIteration(final ComputePositionsMsg msg) {
         //this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
 
         for (int i = 0; i < this.bodies.size(); i++) {
@@ -63,7 +61,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
             b.checkAndSolveBoundaryCollision(this.bounds);
         }
 
-        msg.getReplyTo().tell(new PositionsMsg(this.getContext().getSelf(), this.bodies, msg.getDt(), this.bounds));
+        msg.getReplyTo().tell(new UpdatedPositionsMsg(this.bodies, this.bounds));
 
         return this;
     }
@@ -71,14 +69,13 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     // reset dei bodies con nuovi valori (per un eventuale re-start)
     private Behavior<BodyMsg> onStop(final StopMsg msg) {
         //this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
-        initializeBodies(nBodies);
+        this.initializeBodies(nBodies);
 
         return this;
     }
 
     /* public factory to create the actor */
-    public static Behavior<BodyMsg> create(final ActorRef<ControllerMsg> ctrlerActor, final int totBodies) {
-        controllerActorRef = ctrlerActor;
+    public static Behavior<BodyMsg> create(final int totBodies) {
         nBodies = totBodies;
         return Behaviors.setup(BodyActor::new);
     }
