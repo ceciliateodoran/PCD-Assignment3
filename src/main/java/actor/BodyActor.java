@@ -35,13 +35,14 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
                 .build();
     }
 
-    /* manda messaggio a VelocityCalculator per iniziare a calcolare i nuovi valori */
+    /* calcolo dei nuovi valori di velocità e posizione per ogni Body */
     private Behavior<BodyMsg> onNewIteration(final ComputePositionMsg msg) {
         //this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
-        // Invio ogni body al VelocityCalculatorActor
+
         for (int i = 0; i < this.bodies.size(); i++) {
             // System.out.println("onNewIteration -> iteration n." + i);    // debug
             Body b = this.bodies.get(i);
+
             /* compute total force on bodies */
             V2d totalForce = computeTotalForceOnBody(b);
 
@@ -67,11 +68,12 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return this;
     }
 
+    // reset dei bodies con nuovi valori (per un eventuale re-start)
     private Behavior<BodyMsg> onStop(final StopMsg msg) {
         //this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
-        initializeBodies(nBodies); // resetto i bodies a dei nuovi valori (per un eventuale re-start)
+        initializeBodies(nBodies);
 
-        return this; // Behaviors.stopped();
+        return this;
     }
 
     /* public factory to create the actor */

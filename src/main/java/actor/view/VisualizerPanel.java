@@ -14,14 +14,19 @@ import java.util.List;
 public class VisualizerPanel extends JPanel implements KeyListener {
     
 	private static final long serialVersionUID = 1L;
+
 	private List<Body> bodies;
+
 	private Boundary bounds;
 	
 	private long nIter;
+
 	private double vt;
+
 	private double scale = 1;
 	
     private long dx;
+
     private long dy;
     
     public VisualizerPanel(int w, int h){

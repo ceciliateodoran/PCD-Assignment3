@@ -2,7 +2,7 @@ package actor;
 
 import akka.actor.typed.ActorRef;
 
-public class StopMsg implements BodyMsg, PositionCalculationMsg, VelocityCalculationMsg {
+public class StopMsg implements BodyMsg {
 
     private final ActorRef<ControllerMsg> replyTo;
 
