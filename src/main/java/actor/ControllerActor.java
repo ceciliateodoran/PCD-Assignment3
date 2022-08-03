@@ -41,7 +41,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.bodyActorRef = context.spawn(BodyActor.create(context.getSelf(), totBodies), "bodyActor");
 
         // invio del messaggio di start al BodyActor (versione NO GUI)
-        // this.bodyActorRef.tell(new ComputePositionMsg(this.posCalcActorRef, this.velCalcActorRef, this.dt));
+        //this.bodyActorRef.tell(new ComputePositionMsg(context.getSelf(), this.dt));
 
         // creazione della GUI
         this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
@@ -64,27 +64,23 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onUpdatePos(final PositionsMsg msg) {
         //this.getContext().getLog().info("ControllerActor: message of start pos calculation received.");
-        // Debug
-        // System.out.println("bodiesCounter: " + this.bodiesCounter);
-        // System.out.println("currentIter: " + this.currentIter);
+
         if (this.currentIter < maxIter) {
             this.vt += this.dt;
             this.currentIter++;
 
+            /* GUI version */
             //if(this.currentIter % UPDATE_FREQUENCY == 0){
-            this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
+                this.viewActorRef.tell(new PositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
             //}
 
-            /**
-             * No-GUI version
-             */
+            /* No-GUI version */
             /*if (this.currentIter == maxIter) {
+                this.getContext().getLog().info("FINITE ITERAZIONI"); // da eliminare
                 // reset
                 resetCounters();
                 this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
 
-                //inviare msg di fine iterazioni a GUI
-                this.viewActorRef.tell(new ControllerStopMsg());
             } else {
                 //ricominciare il calcolo
                 this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
@@ -93,6 +89,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
+    // msg mandato dalla GUI appena si è aggiornata
     private Behavior<ControllerMsg> onViewUpdated(final ViewUpdatedMsg msg) {
         if (this.currentIter == maxIter) {
             // reset
