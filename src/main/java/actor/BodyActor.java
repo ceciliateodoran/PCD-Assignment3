@@ -4,7 +4,6 @@ import actor.utils.Body;
 import actor.utils.BodyGenerator;
 import actor.utils.Boundary;
 import actor.utils.V2d;
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;

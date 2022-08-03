@@ -1,4 +1,4 @@
-package actor.view;
+package actor;
 
 import actor.ControllerMsg;
 

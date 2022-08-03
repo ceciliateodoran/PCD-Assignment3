@@ -1,8 +1,6 @@
-package actor.view;
+package actor;
 
-import actor.ControllerMsg;
-import actor.ControllerStopMsg;
-import actor.UpdatedPositionsMsg;
+import actor.view.SimulationView;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;

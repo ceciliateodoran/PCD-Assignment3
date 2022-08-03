@@ -1,6 +1,4 @@
-package actor.view;
-
-import actor.ControllerMsg;
+package actor;
 
 /**
  * messaggio che invia il ViewActor al ControllerActor
