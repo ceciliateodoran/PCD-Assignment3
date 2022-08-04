@@ -43,7 +43,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.bodyActorRef = context.spawn(BodyActor.create(totBodies), "bodyActor");
 
         // invio del messaggio di start al BodyActor (versione NO GUI)
-        //this.bodyActorRef.tell(new ComputePositionMsg(context.getSelf(), this.dt));
+        // this.bodyActorRef.tell(new ComputePositionsMsg(context.getSelf(), this.dt));
 
         // creazione della GUI
         this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
@@ -76,16 +76,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             /* GUI version */
             this.viewActorRef.tell(new UpdatedPositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
 
-
             /* No-GUI version */
-            /*if (this.currentIter == maxIter) {
+            /* if (this.currentIter == maxIter) {
                 // reset
                 resetCounters();
-                this.bodyActorRef.tell(new StopMsg(this.getContext().getSelf()));
+                this.bodyActorRef.tell(new StopMsg());
 
             } else {
                 //ricominciare il calcolo
-                this.bodyActorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.dt));
+                this.bodyActorRef.tell(new ComputePositionsMsg(this.getContext().getSelf(), this.dt));
             }*/
         }
         return this;
