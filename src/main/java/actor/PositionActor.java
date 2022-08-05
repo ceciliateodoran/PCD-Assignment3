@@ -21,6 +21,7 @@ public class PositionActor extends AbstractBehavior<BodyMsg> {
     }
 
     private Behavior<BodyMsg> onComputePos(final ComputePositionMsg msg) {
+        //this.getContext().getLog().info("PositionActor: new position's computation message received from BodyActor.");
 
         /* compute bodies new pos */
         for (Body b : msg.getBodies()) {

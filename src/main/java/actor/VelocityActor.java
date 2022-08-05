@@ -25,6 +25,7 @@ public class VelocityActor extends AbstractBehavior<BodyMsg> {
     }
 
     private Behavior<BodyMsg> onComputeVel(final ComputeVelocityMsg msg) {
+        //this.getContext().getLog().info("VelocityActor: new velocity's computation message received from BodyActor.");
 
         for (int i = 0; i < msg.getBodies().size(); i++) {
             Body b = msg.getBodies().get(i);
