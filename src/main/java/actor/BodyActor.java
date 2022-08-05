@@ -36,8 +36,8 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     private void createVelPosCalculators(final ActorContext<BodyMsg> context) {
-        this.velCalculatorRef = context.spawn(VelocityCalculatorActor.create(), "velActor");
-        this.posCalculatorRef = context.spawn(PositionCalculatorActor.create(), "posActor");
+        this.velCalculatorRef = context.spawn(VelocityActor.create(), "velActor");
+        this.posCalculatorRef = context.spawn(PositionActor.create(), "posActor");
     }
 
     @Override
@@ -54,50 +54,20 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     private Behavior<BodyMsg> onNewIteration(final ComputePositionsMsg msg) {
         //this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
 
-        /**
-         * Mando messaggi ai Vel
+        /*
+        Dico al VelocityActor di calcolare i nuovi valori delle velocità dei bodies
          */
-
         this.velCalculatorRef.tell(new ComputeVelocityMsg(this.getContext().getSelf(), this.bodies));
-
-        /**
-         * Old part
-         */
-
-        /*for (int i = 0; i < this.bodies.size(); i++) {
-            Body b = this.bodies.get(i);
-
-            *//* compute total force on bodies *//*
-            V2d totalForce = computeTotalForceOnBody(b);
-
-            *//* compute instant acceleration *//*
-            V2d acc = new V2d(totalForce).scalarMul(1.0 / b.getMass());
-
-            *//* update velocity *//*
-            b.updateVelocity(acc, msg.getDt());
-        }
-
-        *//* compute bodies new pos *//*
-        for (Body b : this.bodies) {
-            b.updatePos(msg.getDt());
-        }
-
-        *//* check collisions with boundaries *//*
-        for (Body b : this.bodies) {
-            b.checkAndSolveBoundaryCollision(this.bounds);
-        }
-
-        msg.getReplyTo().tell(new UpdatedPositionsMsg(this.bodies, this.bounds));*/
 
         return this;
     }
 
     private Behavior<BodyMsg> onUpdatedVelocities(final VelUpdatedMsg msg) {
-        /**
-         * Aspetto risposte da tutti i Vel
-         * Mando messaggi ai Pos
-         */
 
+        /*
+        Aggiorno i valori dei bodies con i nuovi valori di velocità calcolati dal VelocityActor
+        e li mando al PositionActor
+         */
         this.bodies = msg.getSplittedBodiesUpdated();
         this.posCalculatorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.bodies, this.bounds));
 
@@ -106,11 +76,10 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private Behavior<BodyMsg> onUpdatePositions(final PosUpdatedMsg msg) {
 
-        /**
-         * Aspetto risposte da tutti i Pos
-         * Mando messaggio al BodyActor
+        /*
+        Aggiorno i valori dei bodies con i nuovi valori di posizione calcolati dal PositionActor
+        e li mando al ControllerActor
          */
-
         this.bodies = msg.getSplittedBodiesUpdated();
         controllerRef.tell(new UpdatedPositionsMsg(this.bodies, this.bounds));
 

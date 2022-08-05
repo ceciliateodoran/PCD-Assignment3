@@ -7,9 +7,9 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
-public class PositionCalculatorActor extends AbstractBehavior<BodyMsg> {
+public class PositionActor extends AbstractBehavior<BodyMsg> {
 
-    public PositionCalculatorActor(final ActorContext<BodyMsg> context) {
+    public PositionActor(final ActorContext<BodyMsg> context) {
         super(context);
     }
 
@@ -38,7 +38,7 @@ public class PositionCalculatorActor extends AbstractBehavior<BodyMsg> {
     }
 
     public static Behavior<BodyMsg> create() {
-        return Behaviors.setup(PositionCalculatorActor::new);
+        return Behaviors.setup(PositionActor::new);
     }
 
 }

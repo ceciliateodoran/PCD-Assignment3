@@ -10,10 +10,10 @@ import akka.actor.typed.javadsl.Receive;
 
 import java.util.List;
 
-public class VelocityCalculatorActor extends AbstractBehavior<BodyMsg> {
+public class VelocityActor extends AbstractBehavior<BodyMsg> {
 
 
-    public VelocityCalculatorActor(final ActorContext<BodyMsg> context) {
+    public VelocityActor(final ActorContext<BodyMsg> context) {
         super(context);
     }
 
@@ -45,7 +45,7 @@ public class VelocityCalculatorActor extends AbstractBehavior<BodyMsg> {
     }
 
     public static Behavior<BodyMsg> create() {
-        return Behaviors.setup(VelocityCalculatorActor::new);
+        return Behaviors.setup(VelocityActor::new);
     }
 
     private V2d computeTotalForceOnBody(final Body b, final List<Body> bodies) {
