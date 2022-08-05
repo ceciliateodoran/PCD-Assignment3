@@ -3,7 +3,7 @@ package actor;
 import actor.utils.Body;
 import actor.utils.BodyGenerator;
 import actor.utils.Boundary;
-import actor.utils.V2d;
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -22,9 +22,22 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private List<Body> bodies;
 
+    private ActorRef velCalculatorRef;
+
+    private ActorRef posCalculatorRef;
+
+    private static ActorRef controllerRef;
+
+
     public BodyActor(final ActorContext<BodyMsg> context) {
         super(context);
         this.initializeBodies(nBodies);
+        this.createVelPosCalculators(context);
+    }
+
+    private void createVelPosCalculators(final ActorContext<BodyMsg> context) {
+        this.velCalculatorRef = context.spawn(VelocityCalculatorActor.create(), "velActor");
+        this.posCalculatorRef = context.spawn(PositionCalculatorActor.create(), "posActor");
     }
 
     @Override
@@ -32,6 +45,8 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return newReceiveBuilder()
                 .onMessage(ComputePositionsMsg.class, this::onNewIteration)
                 .onMessage(StopMsg.class, this::onStop)
+                .onMessage(PosUpdatedMsg.class, this::onUpdatePositions)
+                .onMessage(VelUpdatedMsg.class, this::onUpdatedVelocities)
                 .build();
     }
 
@@ -39,30 +54,65 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     private Behavior<BodyMsg> onNewIteration(final ComputePositionsMsg msg) {
         //this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
 
-        for (int i = 0; i < this.bodies.size(); i++) {
+        /**
+         * Mando messaggi ai Vel
+         */
+
+        this.velCalculatorRef.tell(new ComputeVelocityMsg(this.getContext().getSelf(), this.bodies));
+
+        /**
+         * Old part
+         */
+
+        /*for (int i = 0; i < this.bodies.size(); i++) {
             Body b = this.bodies.get(i);
 
-            /* compute total force on bodies */
+            *//* compute total force on bodies *//*
             V2d totalForce = computeTotalForceOnBody(b);
 
-            /* compute instant acceleration */
+            *//* compute instant acceleration *//*
             V2d acc = new V2d(totalForce).scalarMul(1.0 / b.getMass());
 
-            /* update velocity */
+            *//* update velocity *//*
             b.updateVelocity(acc, msg.getDt());
         }
 
-        /* compute bodies new pos */
+        *//* compute bodies new pos *//*
         for (Body b : this.bodies) {
             b.updatePos(msg.getDt());
         }
 
-        /* check collisions with boundaries */
+        *//* check collisions with boundaries *//*
         for (Body b : this.bodies) {
             b.checkAndSolveBoundaryCollision(this.bounds);
         }
 
-        msg.getReplyTo().tell(new UpdatedPositionsMsg(this.bodies, this.bounds));
+        msg.getReplyTo().tell(new UpdatedPositionsMsg(this.bodies, this.bounds));*/
+
+        return this;
+    }
+
+    private Behavior<BodyMsg> onUpdatedVelocities(final VelUpdatedMsg msg) {
+        /**
+         * Aspetto risposte da tutti i Vel
+         * Mando messaggi ai Pos
+         */
+
+        this.bodies = msg.getSplittedBodiesUpdated();
+        this.posCalculatorRef.tell(new ComputePositionMsg(this.getContext().getSelf(), this.bodies, this.bounds));
+
+        return this;
+    }
+
+    private Behavior<BodyMsg> onUpdatePositions(final PosUpdatedMsg msg) {
+
+        /**
+         * Aspetto risposte da tutti i Pos
+         * Mando messaggio al BodyActor
+         */
+
+        this.bodies = msg.getSplittedBodiesUpdated();
+        controllerRef.tell(new UpdatedPositionsMsg(this.bodies, this.bounds));
 
         return this;
     }
@@ -76,8 +126,9 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     /* public factory to create Body actor */
-    public static Behavior<BodyMsg> create(final int totBodies) {
+    public static Behavior<BodyMsg> create(final ActorRef ctrlRef, final int totBodies) {
         nBodies = totBodies;
+        controllerRef = ctrlRef;
         return Behaviors.setup(BodyActor::new);
     }
 
@@ -85,27 +136,5 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
         BodyGenerator bg = new BodyGenerator();
         this.bodies = bg.generateBodies(totBodies, this.bounds);
-    }
-
-    private V2d computeTotalForceOnBody(final Body b) {
-        V2d totalForce = new V2d(0, 0);
-
-        /* compute total repulsive force */
-        for (Body otherBody : bodies) {
-            if (!b.equals(otherBody)) {
-                try {
-                    V2d forceByOtherBody = b.computeRepulsiveForceBy(otherBody);
-                    totalForce.sum(forceByOtherBody);
-                } catch (Exception ex) {
-                    System.out.println("Error in force calculation of the body n." + bodies.indexOf(otherBody));
-                    ex.printStackTrace();
-                }
-            }
-        }
-
-        /* add friction force */
-        totalForce.sum(b.getCurrentFrictionForce());
-
-        return totalForce;
     }
 }

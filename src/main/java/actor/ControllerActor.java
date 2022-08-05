@@ -40,7 +40,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private void createActors(final ActorContext<ControllerMsg> context) {
-        this.bodyActorRef = context.spawn(BodyActor.create(totBodies), "bodyActor");
+        this.bodyActorRef = context.spawn(BodyActor.create(context.getSelf(), totBodies), "bodyActor");
 
         // invio del messaggio di start al BodyActor (versione NO GUI)
         //this.bodyActorRef.tell(new ComputePositionMsg(context.getSelf(), this.dt));
@@ -76,7 +76,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             /* GUI version */
             this.viewActorRef.tell(new UpdatedPositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
 
-
             /* No-GUI version */
             /*if (this.currentIter == maxIter) {
                 // reset
@@ -110,9 +109,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Stop */
     private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
         //this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
-        resetCounters();
+
         // reset dei bodies
         this.bodyActorRef.tell(new StopMsg());
+
         return this;
     }
 
