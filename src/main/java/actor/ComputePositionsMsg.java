@@ -8,12 +8,12 @@ import akka.actor.typed.ActorRef;
  */
 public class ComputePositionsMsg implements BodyMsg {
 
-    private ActorRef replyTo;
+    private ActorRef<ControllerMsg> replyTo;
 
     /* virtual time step */
     private final double dt;
 
-    public ComputePositionsMsg(final ActorRef replyTo, final double dt) {
+    public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt) {
         this.replyTo = replyTo;
         this.dt = dt;
     }
