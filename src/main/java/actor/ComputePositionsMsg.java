@@ -18,7 +18,7 @@ public class ComputePositionsMsg implements BodyMsg {
         this.dt = dt;
     }
 
-    public ActorRef getReplyTo() {
+    public ActorRef<ControllerMsg> getReplyTo() {
         return this.replyTo;
     }
 
