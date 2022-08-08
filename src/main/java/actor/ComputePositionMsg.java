@@ -8,19 +8,19 @@ import java.util.List;
 
 public class ComputePositionMsg implements BodyMsg {
 
-    private ActorRef replyToBodyActor;
+    private ActorRef<BodyMsg> replyToBodyActor;
 
     private List<Body> bodies;
 
     private Boundary bounds;
 
-    public ComputePositionMsg(ActorRef bodyRef, List<Body> bodies, Boundary bounds) {
+    public ComputePositionMsg(ActorRef<BodyMsg> bodyRef, List<Body> bodies, Boundary bounds) {
         this.replyToBodyActor = bodyRef;
         this.bodies = bodies;
         this.bounds = bounds;
     }
 
-    public ActorRef getReplyToBodyActor() {
+    public ActorRef<BodyMsg> getReplyToBodyActor() {
         return replyToBodyActor;
     }
 

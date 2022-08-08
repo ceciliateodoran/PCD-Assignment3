@@ -7,16 +7,16 @@ import java.util.List;
 
 public class ComputeVelocityMsg implements BodyMsg {
 
-    private ActorRef replyToBodyActor;
+    private ActorRef<BodyMsg> replyToBodyActor;
 
     private List<Body> bodies;
 
-    public ComputeVelocityMsg(ActorRef bodyRef, List<Body> bodies) {
+    public ComputeVelocityMsg(ActorRef<BodyMsg> bodyRef, List<Body> bodies) {
         this.replyToBodyActor = bodyRef;
         this.bodies = bodies;
     }
 
-    public ActorRef getReplyToBodyActor() {
+    public ActorRef<BodyMsg> getReplyToBodyActor() {
         return replyToBodyActor;
     }
 
