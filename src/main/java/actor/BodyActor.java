@@ -22,7 +22,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     private List<Body> bodies;
 
-    public BodyActor(final ActorContext<BodyMsg> context) {
+    private BodyActor(final ActorContext<BodyMsg> context) {
         super(context);
         this.initializeBodies(nBodies);
     }

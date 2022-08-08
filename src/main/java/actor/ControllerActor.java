@@ -32,7 +32,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private ActorRef<ViewMsg> viewActorRef;
 
-    public ControllerActor(final ActorContext<ControllerMsg> context) {
+    private ControllerActor(final ActorContext<ControllerMsg> context) {
         super(context);
         this.dt = 0.001;
         resetCounters();
