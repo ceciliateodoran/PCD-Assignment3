@@ -13,7 +13,7 @@ import java.util.List;
 public class VelocityActor extends AbstractBehavior<BodyMsg> {
 
 
-    public VelocityActor(final ActorContext<BodyMsg> context) {
+    private VelocityActor(final ActorContext<BodyMsg> context) {
         super(context);
     }
 

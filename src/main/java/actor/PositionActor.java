@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 
 public class PositionActor extends AbstractBehavior<BodyMsg> {
 
-    public PositionActor(final ActorContext<BodyMsg> context) {
+    private PositionActor(final ActorContext<BodyMsg> context) {
         super(context);
     }
 
