@@ -1,4 +1,4 @@
-package distributed;
+package distributed.view;
 
 import akka.actor.typed.ActorSystem;
 import distributed.view.ViewActor;
