@@ -13,7 +13,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     public ViewActor(final ActorContext<ViewMsg> context) {
         super(context);
 
-        this.viewer = new SimulationView(620,620, context.getSelf());
+        this.viewer = new SimulationView(2, 4, 800,800, context.getSelf());
         this.viewer.display();
 
     }

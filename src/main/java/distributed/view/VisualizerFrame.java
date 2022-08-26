@@ -18,94 +18,30 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 
 	private JTextField fireStationState;
 
+	private JTextField totSensors;
+
+	private JPanel mainPanel;
+
 	private ActorRef<ViewMsg> viewActorRef;
 
-    public VisualizerFrame(final int w, final int h, final ActorRef<ViewMsg> viewActorRef){
+    public VisualizerFrame(final int myArea, final int totAreas, final int w, final int h, final ActorRef<ViewMsg> viewActorRef){
         setTitle("Monitoring GUI");
         setSize(w,h);
         setResizable(false);
 
 		this.viewActorRef = viewActorRef;
 
-		//pannello con info relative alla mia zona
-		JPanel title1Panel = new JPanel();
-		title1Panel.add(new JLabel("ZONA C"));
-        
-        JPanel area1Panel = new JPanel();
-		this.areaState = new JTextField(20);
-		this.areaState.setText("OK");
-		this.areaState.setEditable(false);
+		this.createAreaPanel(myArea, totAreas);
 
-		this.managementButton = new JButton("");
-		this.managementButton.setVisible(false);
+		setContentPane(this.mainPanel);
 
-		area1Panel.add(new JLabel("Stato ZONA C"));
-		area1Panel.add(this.areaState);
-		area1Panel.add(Box.createHorizontalStrut(20));
-		area1Panel.add(this.managementButton);
-
-		JPanel fireStation1Panel = new JPanel();
-		this.fireStationState = new JTextField(20);
-		this.fireStationState.setText("LIBERA");
-		this.fireStationState.setEditable(false);
-
-		fireStation1Panel.add(new JLabel("Stato CASERMA C"));
-		fireStation1Panel.add(this.fireStationState);
-
-		JPanel controlPanel = new JPanel();
-		controlPanel.add(this.managementButton);
-
-		JPanel cp = new JPanel();
-		cp.setLayout(new BorderLayout());
-		cp.add(BorderLayout.NORTH, title1Panel);
-		cp.add(BorderLayout.CENTER, area1Panel);
-		cp.add(BorderLayout.SOUTH, fireStation1Panel);
-
-		//pannello con info relative alla zona vicina in allarme
-		JPanel title2Panel = new JPanel();
-		title2Panel.add(new JLabel("ZONA A"));
-
-		JPanel area2Panel = new JPanel();
-		JTextField stateArea2 = new JTextField(20);
-		stateArea2.setText("ALLARME");
-		stateArea2.setEditable(false);
-
-		area2Panel.add(new JLabel("Stato ZONA A"));
-		area2Panel.add(stateArea2);
-
-		JPanel fireStation2Panel = new JPanel();
-		JTextField state2FireStation = new JTextField(20);
-		state2FireStation.setText("OCCUPATA");
-		state2FireStation.setEditable(false);
-
-		fireStation2Panel.add(new JLabel("Stato CASERMA A"));
-		fireStation2Panel.add(state2FireStation);
-
-		JPanel sp = new JPanel();
-		sp.setLayout(new BorderLayout());
-		sp.add(BorderLayout.NORTH, title2Panel);
-		sp.add(BorderLayout.CENTER, area2Panel);
-		sp.add(BorderLayout.SOUTH, fireStation2Panel);
-
-		//pannello principale
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		mainPanel.add(cp);
-		mainPanel.add(Box.createVerticalStrut(10));
-		mainPanel.add(sp);
-
-		setContentPane(mainPanel);
-
-		this.managementButton.addActionListener(this);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-		// invio del messaggio di Start al ViewActor
-		this.viewActorRef.tell(new ViewStartMsg());
     }
     
     public void display(){
     	try {
 			SwingUtilities.invokeAndWait(() -> {
+				//updateAreaState();
 				repaint();
 			});
 		} catch (InvocationTargetException | InterruptedException e) {
@@ -114,14 +50,12 @@ public class VisualizerFrame extends JFrame implements ActionListener {
     }
     
     public void updateSimulationState(final String state) {
-    	//switchButtons();
+
     	this.areaState.setText(state);
-		if(state.equals("ALLARME") && this.fireStationState.getText().equals("LIBERA")){
+
+		if(state.equals("ALLARME")){
 			this.managementButton.setText("GESTISCI");
 			this.managementButton.setVisible(true);
-		} else if (state.equals("IN GESTIONE") && this.fireStationState.getText().equals("OCCUPATA")) {
-
-
 		}
 	}
 
@@ -129,19 +63,100 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		String cmd = e.getActionCommand();
 
-		if (cmd.equals("stop")) {
-			//switchButtons();
-			this.areaState.setText("Stopped");
+		if (cmd.equals("GESTISCI")) {
+			this.managementButton.setText("FINE GESTIONE");
+
+			this.areaState.setText("IN GESTIONE");
+			this.fireStationState.setText("OCCUPATA");
+
 			// invio del messaggio di Stop al ViewActor
-			this.viewActorRef.tell(new ViewStopMsg());
+			//this.viewActorRef.tell(new ViewStopMsg());
+		} else if (cmd.equals("FINE GESTIONE")) {
+			this.managementButton.setText("");
+			this.managementButton.setVisible(false);
+
+			this.areaState.setText("OK");
+			this.fireStationState.setText("LIBERA");
 		}
 	}
-	
-	/*private void switchButtons() {
-			this.stopButton.setEnabled(true);
-		} else {
 
-			this.stopButton.setEnabled(false);
+	private void createAreaPanel(final int myArea, final int tot){
+
+		mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+		for (int i = 1; i <= tot; i++) {
+			JPanel titlePanel = new JPanel();
+			JLabel label = new JLabel("ZONA "+i);
+			if(i == myArea){
+				label.setForeground(Color.MAGENTA);
+			}
+			titlePanel.add(label);
+
+			JPanel areaPanel = new JPanel();
+			areaPanel.add(new JLabel("Stato ZONA "+i));
+			if(i == myArea){
+				this.areaState = new JTextField(20);
+				this.areaState.setText("OK");
+				this.areaState.setEditable(false);
+
+				areaPanel.add(this.areaState);
+			} else{
+				JTextField areaState = new JTextField(20);
+				areaState.setText("OK");
+				areaState.setEditable(false);
+
+				areaPanel.add(areaState);
+			}
+
+			JPanel fireStationPanel = new JPanel();
+			fireStationPanel.add(new JLabel("Stato CASERMA "+i));
+
+			if(i == myArea){
+				this.fireStationState = new JTextField(20);
+				this.fireStationState.setText("LIBERA");
+				this.fireStationState.setEditable(false);
+
+				fireStationPanel.add(this.fireStationState);
+			}else {
+				JTextField fireStationState = new JTextField(20);
+				fireStationState.setText("LIBERA");
+				fireStationState.setEditable(false);
+
+				fireStationPanel.add(fireStationState);
+			}
+
+			JPanel sensorsPanel = new JPanel();
+			JTextField nSensors = new JTextField(10);
+			nSensors.setText("100");
+			nSensors.setEditable(false);
+
+			sensorsPanel.add(new JLabel("# sensori"));
+			sensorsPanel.add(nSensors);
+
+			JPanel cp = new JPanel();
+			cp.setLayout(new BorderLayout());
+			cp.add(BorderLayout.NORTH, titlePanel);
+			cp.add(BorderLayout.WEST, fireStationPanel);
+			cp.add(BorderLayout.CENTER, areaPanel);
+			cp.add(BorderLayout.EAST, sensorsPanel);
+
+			if(i == myArea){
+				this.managementButton = new JButton("GESTISCI");
+				this.managementButton.setVisible(true);
+
+				cp.add(BorderLayout.SOUTH, this.managementButton);
+				this.managementButton.addActionListener(this);
+			}
+
+			mainPanel.add(Box.createVerticalStrut(20));
+			mainPanel.add(cp);
+
+			if( i != tot ){
+				mainPanel.add(Box.createVerticalStrut(20));
+				mainPanel.add(new JSeparator());
+			}
 		}
-	}*/
+	}
+
 }
