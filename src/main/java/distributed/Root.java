@@ -12,9 +12,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import distributed.messages.ValueMsg;
 import distributed.model.Sensor;
-import distributed.messages.DetectedValueMsg;
-import distributed.model.ZoneCoordinator;
-import distributed.utils.ZoneCalculator;
+import distributed.model.CoordinatorZone;
+import distributed.utils.CalculatorZone;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +22,11 @@ import java.util.Map;
 
 public class Root {
     private City city;
-    private static ZoneCalculator zoneCalculator;
+    private static CalculatorZone calculatorZone;
     private static List<CityZone> cityZone;
     public Root(final City c) {
         this.city = c;
-        this.zoneCalculator = new ZoneCalculator(this.city);
+        this.calculatorZone = new CalculatorZone(this.city);
         this.cityZone = new ArrayList<>();
     }
 
@@ -49,7 +48,7 @@ public class Root {
 
     public static Behavior<Void> rootBehavior() {
         return Behaviors.setup(context -> {
-            List<Pair<Integer, Integer>> zones = zoneCalculator.setZoneSensors();
+            List<Pair<Integer, Integer>> zones = calculatorZone.setZoneSensors();
             ActorRef<Topic.Command<ValueMsg>> topic = null;
 
             int zone = 0;
@@ -58,7 +57,7 @@ public class Root {
                 int sensorNumber = zones.get(i).first();
                 if (zoneNumber > zone) {
                     topic = context.spawn(Topic.create(ValueMsg.class, "TopicZone" + zoneNumber), "TopicZone" + zoneNumber);
-                    context.spawn(ZoneCoordinator.create(zoneNumber, topic), "ZoneCoordinator" + zoneNumber);
+                    context.spawn(CoordinatorZone.create(zoneNumber, topic), "ZoneCoordinator" + zoneNumber);
                     zone = zoneNumber;
                 }
                 // Create an actor that handles cluster domain events

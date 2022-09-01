@@ -11,11 +11,11 @@ import distributed.messages.DetectedValueMsg;
 import distributed.messages.ValueMsg;
 import org.slf4j.Logger;
 
-public class ZoneCoordinator extends AbstractBehavior<ValueMsg> {
+public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
 
     private static int zone;
 
-    private ZoneCoordinator(final ActorContext<ValueMsg> context, final int z) {
+    private CoordinatorZone(final ActorContext<ValueMsg> context, final int z) {
         super(context);
         this.zone = z;
     }
@@ -23,7 +23,7 @@ public class ZoneCoordinator extends AbstractBehavior<ValueMsg> {
     public static Behavior<ValueMsg> create(final int z, final ActorRef<Topic.Command<ValueMsg>> topic) {
         return Behaviors.setup(ctx -> {
             topic.tell(Topic.subscribe(ctx.getSelf()));
-            return new ZoneCoordinator(ctx, z);
+            return new CoordinatorZone(ctx, z);
         });
     }
 

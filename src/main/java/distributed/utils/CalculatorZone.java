@@ -6,10 +6,10 @@ import distributed.City;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ZoneCalculator {
+public class CalculatorZone {
     private City city;
 
-    public ZoneCalculator(final City c) {
+    public CalculatorZone(final City c) {
         this.city = c;
     }
 
