@@ -69,14 +69,17 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 			this.areaState.setText("IN GESTIONE");
 			this.fireStationState.setText("OCCUPATA");
 
-			// invio del messaggio di Stop al ViewActor
-			//this.viewActorRef.tell(new ViewStopMsg());
+			// invio del messaggio al ViewActor
+			this.viewActorRef.tell(new ViewUnderMngmtMsg());
 		} else if (cmd.equals("FINE GESTIONE")) {
 			this.managementButton.setText("");
 			this.managementButton.setVisible(false);
 
 			this.areaState.setText("OK");
 			this.fireStationState.setText("LIBERA");
+
+			// invio del messaggio al ViewActor
+			this.viewActorRef.tell(new ViewEndMngmtMsg());
 		}
 	}
 
