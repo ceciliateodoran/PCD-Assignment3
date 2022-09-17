@@ -1,7 +1,6 @@
 package distributed.messages;
 
-import akka.actor.typed.pubsub.Topic.Command;
-import distributed.model.Sensor;
+import akka.actor.typed.receptionist.Receptionist;
 
 import java.time.ZonedDateTime;
 

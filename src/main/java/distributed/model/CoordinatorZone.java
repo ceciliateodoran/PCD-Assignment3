@@ -1,42 +1,40 @@
 package distributed.model;
 
-import akka.actor.typed.ActorRef;
+import akka.actor.AbstractActor;
+import akka.actor.Props;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import akka.actor.typed.pubsub.Topic;
+import akka.actor.typed.receptionist.Receptionist;
+import akka.actor.typed.receptionist.ServiceKey;
+import akka.event.LoggingAdapter;
 import distributed.messages.DetectedValueMsg;
+import distributed.messages.RecordValueMsg;
 import distributed.messages.ValueMsg;
 import org.slf4j.Logger;
 
-public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
+public class CoordinatorZone extends AbstractActor {
 
     private static int zone;
 
-    private CoordinatorZone(final ActorContext<ValueMsg> context, final int z) {
-        super(context);
+    /*public CoordinatorZone(final int z) {
         this.zone = z;
-    }
+    }*/
 
-    public static Behavior<ValueMsg> create(final int z, final ActorRef<Topic.Command<ValueMsg>> topic) {
-        return Behaviors.setup(ctx -> {
-            topic.tell(Topic.subscribe(ctx.getSelf()));
-            return new CoordinatorZone(ctx, z);
-        });
+    public static Props props() {
+        return Props.create(CoordinatorZone.class);
     }
 
     @Override
-    public Receive<ValueMsg> createReceive() {
-        return newReceiveBuilder()
-                .onMessage(DetectedValueMsg.class, this::evaluateData)
-                .build();
+    public Receive createReceive() {
+        return null;
     }
 
-    private Behavior<ValueMsg> evaluateData(final DetectedValueMsg msg) {
-        Logger log = this.getContext().getSystem().log();
+    private Behavior evaluateData(final DetectedValueMsg msg) {
+        LoggingAdapter log = getContext().getSystem().log();
         log.info("Message received from Coordinator" + zone + " : " + msg.toString());
-        return this;
+        return Behaviors.same();
     }
 }
