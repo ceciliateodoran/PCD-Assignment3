@@ -1,45 +1,58 @@
+
 package distributed.model;
 
-import akka.actor.AbstractActor;
-import akka.actor.Props;
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import akka.actor.typed.receptionist.Receptionist;
-import akka.actor.typed.receptionist.ServiceKey;
-import akka.event.LoggingAdapter;
-import distributed.messages.DetectedValueMsg;
 import distributed.messages.RecordValueMsg;
 import distributed.messages.ValueMsg;
-import org.slf4j.Logger;
-
 import java.time.Duration;
 import java.util.Random;
 
-public class Sensor extends AbstractActor {
+public class Sensor extends AbstractBehavior<ValueMsg> {
 
     private int id;
     private int zone;
     private double value;
 
-    /*public Sensor(final int id, final int z, final ServiceKey<ValueMsg> k) {
+    public Sensor(final ActorContext<ValueMsg> context, final int id, final int z) {
+        super(context);
         this.id = id;
         this.zone = z;
-        this.key = k;
         this.value = -1;
-    }*/
+    }
 
     private void updateValue() {
         this.value = new Random().nextDouble();
     }
 
-    public static Props props() {
-        return Props.create(Sensor.class);
+    public static Behavior<ValueMsg> create(final int id, final int z) {
+        /*
+         * Viene creato il sensore specificandogli questo comportamento:
+         *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
+         *   (ValueMsg) che invia ogni N millisecondi
+         * */
+        return Behaviors.setup(
+                context -> {
+                    Sensor s = new Sensor(context, id, z);
+                    return Behaviors.withTimers(
+                            t -> {
+                                t.startTimerAtFixedRate(new RecordValueMsg(null), Duration.ofMillis(3000));
+                                return s;
+                            }
+                    );
+                }
+        );
     }
 
+    @Override
+    public Receive<ValueMsg> createReceive() {
+        return newReceiveBuilder()
+                .onMessage(RecordValueMsg.class, this::sendData)
+                .build();
+    }
 
     /**
      * Quando il Behavior del sensore invia un messaggio al sensore stesso,
@@ -49,11 +62,10 @@ public class Sensor extends AbstractActor {
      * @return
      */
     private Behavior<ValueMsg> sendData(final RecordValueMsg msg) {
-        LoggingAdapter log = getContext().getSystem().log();
-        log.info("Sending message from sensor " + id + "via" + getContext().getSelf());
         this.updateValue();
-        msg.getReplyToCoordinator().tell(new DetectedValueMsg(zone, id, value));
-        return Behaviors.same();
+        //System.out.println("Sending message from sensor " + id);
+        //this.topicZone.tell(Topic.publish(new DetectedValueMsg(zone, id, value)));
+        return this;
     }
 
     @Override
@@ -64,29 +76,4 @@ public class Sensor extends AbstractActor {
                 ", value=" + value +
                 '}';
     }
-
-    @Override
-    public Receive createReceive() {
-        /*
-         * Viene creato il sensore specificandogli questo comportamento:
-         *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
-         *   (ValueMsg) che invia ogni N millisecondi
-         * */
-        /*return Behaviors.setup(
-                (ActorContext<ValueMsg> context) -> {
-                    Sensor s = new Sensor(context, id, z, key);
-                    context.getSystem()
-                            .receptionist()
-                            .tell(Receptionist.register(key, context.getSelf()));
-                    return Behaviors.withTimers(
-                            t -> {
-                                t.startTimerAtFixedRate(new RecordValueMsg(coordinator), Duration.ofMillis(3000));
-                                return s.behavior();
-                            }
-                    );
-                }
-        );*/
-        return null;
-    }
 }
-

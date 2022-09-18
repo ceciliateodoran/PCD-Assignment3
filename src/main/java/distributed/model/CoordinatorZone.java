@@ -1,40 +1,39 @@
 package distributed.model;
 
-import akka.actor.AbstractActor;
-import akka.actor.Props;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import akka.actor.typed.receptionist.Receptionist;
-import akka.actor.typed.receptionist.ServiceKey;
-import akka.event.LoggingAdapter;
 import distributed.messages.DetectedValueMsg;
-import distributed.messages.RecordValueMsg;
 import distributed.messages.ValueMsg;
 import org.slf4j.Logger;
 
-public class CoordinatorZone extends AbstractActor {
+public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
 
     private static int zone;
 
-    /*public CoordinatorZone(final int z) {
+    private CoordinatorZone(final ActorContext<ValueMsg> context, final int z) {
+        super(context);
         this.zone = z;
-    }*/
+    }
 
-    public static Props props() {
-        return Props.create(CoordinatorZone.class);
+    public static Behavior<ValueMsg> create(final int z) {
+        return Behaviors.setup(ctx -> {
+            return new CoordinatorZone(ctx, z);
+        });
     }
 
     @Override
-    public Receive createReceive() {
-        return null;
+    public Receive<ValueMsg> createReceive() {
+        return newReceiveBuilder()
+                .onMessage(DetectedValueMsg.class, this::evaluateData)
+                .build();
     }
 
-    private Behavior evaluateData(final DetectedValueMsg msg) {
-        LoggingAdapter log = getContext().getSystem().log();
+    private Behavior<ValueMsg> evaluateData(final DetectedValueMsg msg) {
+        Logger log = this.getContext().getSystem().log();
         log.info("Message received from Coordinator" + zone + " : " + msg.toString());
-        return Behaviors.same();
+        return this;
     }
 }
