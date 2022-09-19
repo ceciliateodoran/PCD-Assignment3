@@ -8,7 +8,8 @@ public class SystemSimulation {
         if (args.length == 0) {
             Root root = new Root(city);
             root.startup(2440);
-        } else
+        } else {
             Arrays.stream(args).map(Integer::parseInt).forEach(Root::startup);
+        }
     }
 }
