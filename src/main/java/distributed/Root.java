@@ -33,6 +33,7 @@ public class Root {
     }
 
     public static void startup(int port) {
+        // Represents the seednodes's list of the cluster root
         List<String> clusterSeedNodes = new ArrayList<>();
 
         // Override the configuration of the port
@@ -44,9 +45,12 @@ public class Root {
         overrides.put("akka.remote.artery.enabled", "on");
         overrides.put("akka.remote.artery.transport", "tcp");
         overrides.put("akka.remote.artery.canonical.hostname", DEFAULT_HOSTNAME);
-        overrides.put("akka.cluster.jmx.multi-mbeans-in-same-jvm", "on"); // serve per far avviare più nodi/jvm del cluster su una stessa macchina
+        overrides.put("akka.cluster.jmx.multi-mbeans-in-same-jvm", "on"); // used to boot multiple cluster nodes/jvm on the same machine
         overrides.put("akka.cluster.downing-provider-class", "akka.cluster.sbr.SplitBrainResolverProvider");
 
+        /* Its first element must have the same cluster name, hostname and port of the cluster root (implemented below).
+        In this way, the cluster root will be elected as the first leader node and so the other
+        cluster nodes will be able to join it in the same cluster. */
         clusterSeedNodes.add("akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":" + port);
 
         // Create an Akka ActorSystem for each node in the cluster representing sensors or zone coordinators
@@ -102,7 +106,7 @@ public class Root {
     public static Behavior<Void> rootZoneBehavior(final int zoneNumber) {
         return Behaviors.setup(context -> {
             context.spawn(CoordinatorZone.create(zoneNumber), "ZoneCoordinator" + zoneNumber);
-            return Behaviors.empty();
+            return Behaviors.same();
         });
     }
 
@@ -110,7 +114,7 @@ public class Root {
         return Behaviors.setup(context -> {
             // Create an actor that handles cluster domain events
             context.spawn(Sensor.create(sensorNumber, zoneNumber), "Sensor" + sensorNumber);
-            return Behaviors.empty();
+            return Behaviors.same();
         });
     }
 }
