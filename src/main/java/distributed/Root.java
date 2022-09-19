@@ -4,7 +4,6 @@ import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.cluster.typed.Cluster;
-import akka.cluster.typed.ClusterSetup;
 import akka.japi.Pair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -15,7 +14,6 @@ import distributed.utils.CalculatorZone;
 import java.util.*;
 
 public class Root {
-
     private static final String CLUSTER_NAME = "PluviometerCluster";
     private static final String DEFAULT_HOSTNAME = "127.0.0.1";
     private static final String PATH = "akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":";
@@ -24,7 +22,6 @@ public class Root {
     private City city;
     private static CalculatorZone calculatorZone;
     private static ActorSystem<Void> clusterRootNode;
-
 
     public Root(final City c) {
         this.city = c;
@@ -94,10 +91,10 @@ public class Root {
         }
     }
 
-    public static Config setConfig(final Map<String, Object> overrides, final List<String> seednodes, final int port) {
+    public static Config setConfig(final Map<String, Object> overrides, final List<String> seedNodes, final int port) {
         Map<String, Object> configs = new HashMap<>(overrides);
         configs.put("akka.remote.artery.canonical.port", port);
-        configs.put("akka.cluster.seed-nodes", seednodes);
+        configs.put("akka.cluster.seed-nodes", seedNodes);
         System.out.println(configs);
         return ConfigFactory.parseMap(configs).withFallback(ConfigFactory.load());
     }
