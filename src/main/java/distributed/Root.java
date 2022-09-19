@@ -18,9 +18,9 @@ public class Root {
 
     private static final String CLUSTER_NAME = "PluviometerCluster";
     private static final String DEFAULT_HOSTNAME = "127.0.0.1";
+    private static final String PATH = "akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":";
     private static final int DEFAULT_ZONES_PORT = 2550;
     private static final int DEFAULT_SENSORS_PORT = 2660;
-    private int zoneCounter;
     private City city;
     private static CalculatorZone calculatorZone;
     private static ActorSystem<Void> clusterRootNode;
@@ -29,10 +29,9 @@ public class Root {
     public Root(final City c) {
         this.city = c;
         this.calculatorZone = new CalculatorZone(this.city);
-        this.zoneCounter = 0;
     }
 
-    public static void startup(int port) {
+    public static void startup(int clusterRootPort) {
         // Represents the seednodes's list of the cluster root
         List<String> clusterSeedNodes = new ArrayList<>();
 
@@ -51,13 +50,13 @@ public class Root {
         /* Its first element must have the same cluster name, hostname and port of the cluster root (implemented below).
         In this way, the cluster root will be elected as the first leader node and so the other
         cluster nodes will be able to join it in the same cluster. */
-        clusterSeedNodes.add("akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":" + port);
+        clusterSeedNodes.add(PATH + clusterRootPort);
 
         // Create an Akka ActorSystem for each node in the cluster representing sensors or zone coordinators
-        createClusterNodes(clusterSeedNodes, overrides, port);
+        createClusterNodes(clusterSeedNodes, overrides, clusterRootPort);
 
         // Create the Akka cluster root node in order to join all others cluster nodes
-        clusterRootNode = ActorSystem.create(Behaviors.ignore(), CLUSTER_NAME, setConfig(overrides, clusterSeedNodes, port));
+        clusterRootNode = ActorSystem.create(Behaviors.ignore(), CLUSTER_NAME, setConfig(overrides, clusterSeedNodes, clusterRootPort));
 
         /**
          * Debug of cluster
@@ -81,17 +80,17 @@ public class Root {
             if (zoneNumber > zoneCounter) {
                 System.out.println("ZoneCoordinator " + zoneNumber);
                 ActorSystem.create(rootZoneBehavior(zoneNumber), CLUSTER_NAME,
-                        setConfig(overrides, Arrays.asList("akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":" + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
+                        setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
 
-                clusterSeedNodes.add("akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":" + (DEFAULT_ZONES_PORT + zoneNumber));
+                clusterSeedNodes.add(PATH + (DEFAULT_ZONES_PORT + zoneNumber));
                 zoneCounter = zoneNumber;
             }
             System.out.println("Sensor " + sensorNumber);
             // Create an actor that handles cluster domain events
             ActorSystem.create(rootSensorBehavior(sensorNumber, zoneNumber), CLUSTER_NAME,
-                    setConfig(overrides, Arrays.asList("akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":" + clusterRootPort), DEFAULT_SENSORS_PORT + sensorNumber));
+                    setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT + sensorNumber));
 
-            clusterSeedNodes.add("akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":" + (DEFAULT_SENSORS_PORT + sensorNumber));
+            clusterSeedNodes.add(PATH + (DEFAULT_SENSORS_PORT + sensorNumber));
         }
     }
 
