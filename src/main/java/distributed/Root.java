@@ -37,12 +37,14 @@ public class Root {
         // Override the configuration of the port
         Map<String, Object> overrides = new HashMap<>();
 
+        overrides.put("akka.log-level", "DEBUG"); // akka debug
         overrides.put("akka.actor.provider", "cluster");
         overrides.put("akka.discovery.method", "config");
         overrides.put("akka.remote.artery.enabled", "on");
         overrides.put("akka.remote.artery.transport", "tcp");
         overrides.put("akka.remote.artery.canonical.hostname", hostname);
         overrides.put("akka.cluster.jmx.multi-mbeans-in-same-jvm", "on"); // serve per far avviare più nodi/jvm del cluster su una stessa macchina
+        overrides.put("downing-provider-class", "akka.cluster.sbr.SplitBrainResolverProvider");
 
         clusterSeedNodes.add("akka://" + clusterName + "@" + hostname + ":" + port);
 
@@ -74,7 +76,7 @@ public class Root {
         );
 
         rootActorSystem = ActorSystem.create(Behaviors.ignore(), clusterName, setConfig(overrides, clusterSeedNodes, port));
-        
+
         /**
          * Debug of cluster
          */
