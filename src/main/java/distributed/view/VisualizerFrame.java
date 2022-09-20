@@ -88,6 +88,12 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
+		JPanel secondMainPanel = new JPanel();
+		secondMainPanel.setLayout(new BoxLayout(secondMainPanel, BoxLayout.Y_AXIS));
+
+		JScrollPane jscroll = new JScrollPane(secondMainPanel);
+		mainPanel.add(jscroll);
+
 		for (int i = 1; i <= tot; i++) {
 			JPanel titlePanel = new JPanel();
 			JLabel label = new JLabel("ZONA "+i);
@@ -152,12 +158,13 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 				this.managementButton.addActionListener(this);
 			}
 
-			mainPanel.add(Box.createVerticalStrut(20));
-			mainPanel.add(cp);
+			secondMainPanel.add(Box.createVerticalStrut(20));
+			secondMainPanel.add(cp);
+			secondMainPanel.add(Box.createVerticalStrut(20));
 
 			if( i != tot ){
-				mainPanel.add(Box.createVerticalStrut(20));
-				mainPanel.add(new JSeparator());
+				secondMainPanel.add(Box.createVerticalStrut(20));
+				secondMainPanel.add(new JSeparator());
 			}
 		}
 	}
