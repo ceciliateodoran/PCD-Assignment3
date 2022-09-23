@@ -1,22 +1,34 @@
 package distributed;
 
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.internal.receptionist.ReceptionistMessages;
 import akka.actor.typed.javadsl.Behaviors;
+import akka.actor.typed.receptionist.Receptionist;
+import akka.actor.typed.receptionist.ServiceKey;
+import akka.cluster.ClusterEvent;
 import akka.cluster.typed.Cluster;
+import akka.cluster.typed.Subscribe;
 import akka.japi.Pair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import distributed.messages.DetectedValueMsg;
+import distributed.messages.ValueMsg;
 import distributed.model.CoordinatorZone;
 import distributed.model.Sensor;
 import distributed.utils.CalculatorZone;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Root {
     private static final String CLUSTER_NAME = "PluviometerCluster";
     private static final String DEFAULT_HOSTNAME = "127.0.0.1";
     private static final String PATH = "akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":";
+    private static final String DEFAULT_GUARD_ACTOR = "/user/"; // guardian actor for all user-created top-level actors
+    private static final String DEFAULT_COORDINATOR_NAME = "ZoneCoordinator";
+    private static final String DEFAULT_SENSOR_NAME = "Sensor";
     private static final int DEFAULT_ZONES_PORT = 2550;
     private static final int DEFAULT_SENSORS_PORT = 2660;
     private City city;
@@ -43,6 +55,7 @@ public class Root {
         overrides.put("akka.remote.artery.canonical.hostname", DEFAULT_HOSTNAME);
         overrides.put("akka.cluster.jmx.multi-mbeans-in-same-jvm", "on"); // used to boot multiple cluster nodes/jvm on the same machine
         overrides.put("akka.cluster.downing-provider-class", "akka.cluster.sbr.SplitBrainResolverProvider");
+        overrides.put("akka.actor.serialization-bindings." + '"' + "distributed.messages.DetectedValueMsg" + '"', "jackson-json"); // used to serialize messages
 
         /* Its first element must have the same cluster name, hostname and port of the cluster root (implemented below).
         In this way, the cluster root will be elected as the first leader node and so the other
@@ -61,7 +74,7 @@ public class Root {
         Cluster cluster = Cluster.get(clusterRootNode);
         try {
             Thread.sleep(15000);
-            cluster.state().getMembers().forEach(x -> System.out.println(x));
+            cluster.state().getMembers().forEach(x -> System.out.println(x.address()));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -69,6 +82,7 @@ public class Root {
 
     private static void createClusterNodes(final List<String> clusterSeedNodes, final Map<String, Object> overrides, final int clusterRootPort) {
         int zoneCounter = 0;
+        String coordinatorRemotePath = null;
 
         for (Pair<Integer, Integer> node : calculatorZone.setZoneSensors()) {
             int zoneNumber = node.second();
@@ -76,6 +90,7 @@ public class Root {
 
             if (zoneNumber > zoneCounter) {
                 System.out.println("ZoneCoordinator " + zoneNumber);
+                coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
                 ActorSystem.create(rootZoneBehavior(zoneNumber), CLUSTER_NAME,
                         setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
 
@@ -84,7 +99,7 @@ public class Root {
             }
             System.out.println("Sensor " + sensorNumber);
             // Create an actor that handles cluster domain events
-            ActorSystem.create(rootSensorBehavior(sensorNumber, zoneNumber), CLUSTER_NAME,
+            ActorSystem.create(rootSensorBehavior(sensorNumber, zoneNumber, coordinatorRemotePath + DEFAULT_COORDINATOR_NAME + zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT + sensorNumber));
 
             clusterSeedNodes.add(PATH + (DEFAULT_SENSORS_PORT + sensorNumber));
@@ -99,17 +114,16 @@ public class Root {
         return ConfigFactory.parseMap(configs).withFallback(ConfigFactory.load());
     }
 
-    public static Behavior<Void> rootZoneBehavior(final int zoneNumber) {
+    public static Behavior<CoordinatorZone> rootZoneBehavior(final int zoneNumber) {
         return Behaviors.setup(context -> {
-            context.spawn(CoordinatorZone.create(zoneNumber), "ZoneCoordinator" + zoneNumber);
+            context.spawn(CoordinatorZone.create(zoneNumber), DEFAULT_COORDINATOR_NAME + zoneNumber);
             return Behaviors.same();
         });
     }
 
-    public static Behavior<Void> rootSensorBehavior(final int sensorNumber, final int zoneNumber) {
+    public static Behavior<Sensor> rootSensorBehavior(final int sensorNumber, final int zoneNumber, final String sensorCoordPath) {
         return Behaviors.setup(context -> {
-            // Create an actor that handles cluster domain events
-            context.spawn(Sensor.create(sensorNumber, zoneNumber), "Sensor" + sensorNumber);
+            context.spawn(Sensor.create(sensorNumber, zoneNumber, sensorCoordPath), DEFAULT_SENSOR_NAME + sensorNumber);
             return Behaviors.same();
         });
     }

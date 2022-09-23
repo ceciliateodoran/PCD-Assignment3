@@ -1,13 +1,14 @@
-
 package distributed.model;
 
+
+import akka.actor.ActorPath;
+import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.AbstractBehavior;
-import akka.actor.typed.javadsl.ActorContext;
-import akka.actor.typed.javadsl.Behaviors;
-import akka.actor.typed.javadsl.Receive;
+import akka.actor.typed.javadsl.*;
+import distributed.messages.DetectedValueMsg;
 import distributed.messages.RecordValueMsg;
 import distributed.messages.ValueMsg;
+
 import java.time.Duration;
 import java.util.Random;
 
@@ -16,11 +17,13 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     private int id;
     private int zone;
     private double value;
+    private String coordinatorPath;
 
-    public Sensor(final ActorContext<ValueMsg> context, final int id, final int z) {
+    public Sensor(final ActorContext<ValueMsg> context, final int id, final int z, final String cp) {
         super(context);
         this.id = id;
         this.zone = z;
+        this.coordinatorPath = cp;
         this.value = -1;
     }
 
@@ -28,7 +31,7 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         this.value = new Random().nextDouble();
     }
 
-    public static Behavior<ValueMsg> create(final int id, final int z) {
+    public static Behavior<ValueMsg> create(final int id, final int z, final String cp) {
         /*
          * Viene creato il sensore specificandogli questo comportamento:
          *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
@@ -36,10 +39,10 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
          * */
         return Behaviors.setup(
                 context -> {
-                    Sensor s = new Sensor(context, id, z);
+                    Sensor s = new Sensor(context, id, z, cp);
                     return Behaviors.withTimers(
                             t -> {
-                                t.startTimerAtFixedRate(new RecordValueMsg(null), Duration.ofMillis(3000));
+                                t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
                                 return s;
                             }
                     );
@@ -63,9 +66,13 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
      */
     private Behavior<ValueMsg> sendData(final RecordValueMsg msg) {
         this.updateValue();
-        //System.out.println("Sending message from sensor " + id);
-        //this.topicZone.tell(Topic.publish(new DetectedValueMsg(zone, id, value)));
-        return this;
+        System.out.println("Sending message from sensor " + id);
+        // Example of sending messages
+        getContext().classicActorContext()
+                .actorSelection(ActorPath.fromString(this.coordinatorPath))
+                .tell(new DetectedValueMsg(zone, id, value), ActorRef.noSender());
+
+        return Behaviors.same();
     }
 
     @Override
