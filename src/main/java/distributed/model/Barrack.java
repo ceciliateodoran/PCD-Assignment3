@@ -18,19 +18,19 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private static int zone;
     private String status;
     private Boolean isSilenced;
-    private final ActorRef<Topic.Command<ValueMsg>> topicGUI;
+    private final String GUIAddress;
 
-    private Barrack(final ActorContext<ValueMsg> context, final int z, final ActorRef<Topic.Command<ValueMsg>> topic) {
+    private Barrack(final ActorContext<ValueMsg> context, final int z, final String GUIaddress) {
         super(context);
         this.zone = z;
-        this.topicGUI = topic;
+        this.GUIAddress = GUIaddress;
     }
 
     //
-    public static Behavior<ValueMsg> create(final int z, final ActorRef<Topic.Command<ValueMsg>> topic, final ActorRef<Topic.Command<ValueMsg>> topicGUI) {
+    public static Behavior<ValueMsg> create(final int z, final ActorRef<Topic.Command<ValueMsg>> topic, final String GUIaddress) {
         return Behaviors.setup(ctx -> {
             topic.tell(Topic.subscribe(ctx.getSelf()));
-            return new Barrack(ctx, z, topicGUI);
+            return new Barrack(ctx, z, GUIaddress);
         });
     }
 
