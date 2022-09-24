@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 
 public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
 
-    private static int zone;
+    private int zone;
 
     private CoordinatorZone(final ActorContext<ValueMsg> context, final int z) {
         super(context);
@@ -19,9 +19,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     }
 
     public static Behavior<ValueMsg> create(final int z) {
-        return Behaviors.setup(ctx -> {
-            return new CoordinatorZone(ctx, z);
-        });
+        return Behaviors.setup(ctx -> new CoordinatorZone(ctx, z));
     }
 
     @Override
@@ -33,7 +31,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
 
     private Behavior<ValueMsg> evaluateData(final DetectedValueMsg msg) {
         Logger log = this.getContext().getSystem().log();
-        log.info("Message received from Coordinator" + zone + " : " + msg.toString());
-        return this;
+        log.info("Message received from Coordinator" + this.zone + " : " + msg.toString());
+        return Behaviors.same();
     }
 }
