@@ -18,6 +18,7 @@ import distributed.messages.ValueMsg;
 import distributed.model.CoordinatorZone;
 import distributed.model.Sensor;
 import distributed.utils.CalculatorZone;
+import scala.Int;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,8 +28,6 @@ public class Root {
     private static final String DEFAULT_HOSTNAME = "127.0.0.1";
     private static final String PATH = "akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":";
     private static final String DEFAULT_GUARD_ACTOR = "/user/"; // guardian actor for all user-created top-level actors
-    private static final String DEFAULT_COORDINATOR_NAME = "ZoneCoordinator";
-    private static final String DEFAULT_SENSOR_NAME = "Sensor";
     private static final int DEFAULT_ZONES_PORT = 2550;
     private static final int DEFAULT_SENSORS_PORT = 2660;
     private City city;
@@ -81,32 +80,33 @@ public class Root {
     }
 
     private static void createClusterNodes(final List<String> clusterSeedNodes, final Map<String, Object> overrides, final int clusterRootPort) {
-        int zoneCounter = 0;
-        String coordinatorRemotePath = null;
+        int sensorsCounter = 0;
+        String coordinatorRemotePath;
 
-        for (Pair<Integer, Integer> node : calculatorZone.setZoneSensors()) {
-            int zoneNumber = node.second();
-            int sensorNumber = node.first();
+        for (final CityZone zone : calculatorZone.setSensorsInZones()) {
+            int zoneNumber = zone.getIndex();
 
-            if (zoneNumber > zoneCounter) {
-                System.out.println("ZoneCoordinator " + zoneNumber);
-                coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
-                ActorSystem.create(rootZoneBehavior(zoneNumber), CLUSTER_NAME,
-                        setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
+            System.out.println("ZoneCoordinator " + zoneNumber);
+            coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
+            ActorSystem.create(rootZoneBehavior(zone.getIdZone(), zoneNumber), CLUSTER_NAME,
+                    setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
+            clusterSeedNodes.add(PATH + (DEFAULT_ZONES_PORT + zoneNumber));
 
-                clusterSeedNodes.add(PATH + (DEFAULT_ZONES_PORT + zoneNumber));
-                zoneCounter = zoneNumber;
+            for (final Map.Entry<String, Pair<Integer, Integer>> zoneSensors : zone.getSensors().entrySet()) {
+                sensorsCounter++;
+                System.out.println("Sensor " + sensorsCounter);
+                // Create an actor that handles cluster domain events
+                ActorSystem.create(rootSensorBehavior(zoneSensors.getKey(), zoneNumber,
+                                coordinatorRemotePath + zone.getIdZone(), zoneSensors.getValue()),
+                        CLUSTER_NAME,
+                        setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT + sensorsCounter));
+
+                clusterSeedNodes.add(PATH + (DEFAULT_SENSORS_PORT + sensorsCounter));
             }
-            System.out.println("Sensor " + sensorNumber);
-            // Create an actor that handles cluster domain events
-            ActorSystem.create(rootSensorBehavior(sensorNumber, zoneNumber, coordinatorRemotePath + DEFAULT_COORDINATOR_NAME + zoneNumber), CLUSTER_NAME,
-                    setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT + sensorNumber));
-
-            clusterSeedNodes.add(PATH + (DEFAULT_SENSORS_PORT + sensorNumber));
         }
     }
 
-    public static Config setConfig(final Map<String, Object> overrides, final List<String> seedNodes, final int port) {
+    private static Config setConfig(final Map<String, Object> overrides, final List<String> seedNodes, final int port) {
         Map<String, Object> configs = new HashMap<>(overrides);
         configs.put("akka.remote.artery.canonical.port", port);
         configs.put("akka.cluster.seed-nodes", seedNodes);
@@ -114,16 +114,16 @@ public class Root {
         return ConfigFactory.parseMap(configs).withFallback(ConfigFactory.load());
     }
 
-    public static Behavior<CoordinatorZone> rootZoneBehavior(final int zoneNumber) {
+    private static Behavior<CoordinatorZone> rootZoneBehavior(final String zoneID, final int zoneNumber) {
         return Behaviors.setup(context -> {
-            context.spawn(CoordinatorZone.create(zoneNumber), DEFAULT_COORDINATOR_NAME + zoneNumber);
+            context.spawn(CoordinatorZone.create(zoneID, zoneNumber), zoneID);
             return Behaviors.same();
         });
     }
 
-    public static Behavior<Sensor> rootSensorBehavior(final int sensorNumber, final int zoneNumber, final String sensorCoordPath) {
+    private static Behavior<Sensor> rootSensorBehavior(final String sensorID, final int zoneNumber, final String sensorCoordPath, final Pair<Integer, Integer> spaceCoords) {
         return Behaviors.setup(context -> {
-            context.spawn(Sensor.create(sensorNumber, zoneNumber, sensorCoordPath), DEFAULT_SENSOR_NAME + sensorNumber);
+            context.spawn(Sensor.create(sensorID, zoneNumber, sensorCoordPath, spaceCoords), sensorID);
             return Behaviors.same();
         });
     }
