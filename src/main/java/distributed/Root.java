@@ -57,7 +57,7 @@ public class Root {
         overrides.put("akka.remote.artery.canonical.hostname", DEFAULT_HOSTNAME);
         overrides.put("akka.cluster.jmx.multi-mbeans-in-same-jvm", "on"); // used to boot multiple cluster nodes/jvm on the same machine
         overrides.put("akka.cluster.downing-provider-class", "akka.cluster.sbr.SplitBrainResolverProvider");
-        overrides.put("akka.actor.serialization-bindings." + '"' + "distributed.messages.DetectedValueMsg" + '"', "jackson-json"); // used to serialize messages
+        overrides.put("akka.actor.serialization-bindings." + '"' + "distributed.messages.ValueMsg" + '"', "jackson-json"); // used to serialize messages
 
         /* Its first element must have the same cluster name, hostname and port of the cluster root (implemented below).
         In this way, the cluster root will be elected as the first leader node and so the other
