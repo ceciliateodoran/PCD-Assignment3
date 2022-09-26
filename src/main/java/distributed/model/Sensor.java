@@ -15,10 +15,10 @@ import java.time.Duration;
 import java.util.Random;
 
 public class Sensor extends AbstractBehavior<ValueMsg> {
-
     private String id;
     private int zone;
     private double value;
+    private double limit;
     private String coordinatorPath;
     private Pair<Integer, Integer> spaceCoords;
 
@@ -28,6 +28,7 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         this.zone = z;
         this.coordinatorPath = cp;
         this.spaceCoords = sc;
+        this.limit = new Random().nextDouble();
         this.value = -1;
     }
 
@@ -74,7 +75,7 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         // Example of sending messages
         getContext().classicActorContext()
                 .actorSelection(ActorPath.fromString(this.coordinatorPath))
-                .tell(new DetectedValueMsg(zone, id, value, this.spaceCoords), ActorRef.noSender());
+                .tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords), ActorRef.noSender());
 
         return Behaviors.same();
     }

@@ -1,5 +1,6 @@
 package distributed;
 
+import actor.ViewActor;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
@@ -15,6 +16,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import distributed.messages.DetectedValueMsg;
 import distributed.messages.ValueMsg;
+import distributed.model.Barrack;
 import distributed.model.CoordinatorZone;
 import distributed.model.Sensor;
 import distributed.utils.CalculatorZone;
@@ -30,6 +32,7 @@ public class Root {
     private static final String DEFAULT_GUARD_ACTOR = "/user/"; // guardian actor for all user-created top-level actors
     private static final int DEFAULT_ZONES_PORT = 2550;
     private static final int DEFAULT_SENSORS_PORT = 2660;
+    private static final int DEFAULT_BARRACK_PORT = 2870;
     private City city;
     private static CalculatorZone calculatorZone;
     private static ActorSystem<Void> clusterRootNode;
@@ -92,6 +95,10 @@ public class Root {
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
             clusterSeedNodes.add(PATH + (DEFAULT_ZONES_PORT + zoneNumber));
 
+            // creation of Barracks and its GUIs
+            ActorSystem.create(rootBarrackBehaviour(zoneNumber), CLUSTER_NAME,
+                    setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT + zoneNumber));
+
             for (final Map.Entry<String, Pair<Integer, Integer>> zoneSensors : zone.getSensors().entrySet()) {
                 sensorsCounter++;
                 System.out.println("Sensor " + sensorsCounter);
@@ -124,6 +131,14 @@ public class Root {
     private static Behavior<Sensor> rootSensorBehavior(final String sensorID, final int zoneNumber, final String sensorCoordPath, final Pair<Integer, Integer> spaceCoords) {
         return Behaviors.setup(context -> {
             context.spawn(Sensor.create(sensorID, zoneNumber, sensorCoordPath, spaceCoords), sensorID);
+            return Behaviors.same();
+        });
+    }
+
+    private static Behavior<Barrack> rootBarrackBehaviour(final int zoneNumber) {
+        return Behaviors.setup(context -> {
+            context.spawn(Barrack.create(zoneNumber), "Barrack" + zoneNumber); // da cambiare la create di Barrack
+            //context.spawn(ViewActor.create(context.getSelf(), 0, 0), "ClientView"); // da cambiare la create di ViewActor
             return Behaviors.same();
         });
     }
