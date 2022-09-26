@@ -10,6 +10,7 @@ repositories {
 }
 
 def versions = [
+        AkkaManagementVersion: "1.1.4",
         ScalaBinary: "2.13"
 ]
 
@@ -23,6 +24,8 @@ dependencies {
     testImplementation "com.typesafe.akka:akka-actor-testkit-typed_${versions.ScalaBinary}"
 
     implementation "com.typesafe.akka:akka-cluster-typed_${versions.ScalaBinary}"
+
+    implementation "com.typesafe.akka:akka-serialization-jackson_${versions.ScalaBinary}"
 
     /* for logging */
     implementation 'org.slf4j:slf4j-api:1.7.36'
