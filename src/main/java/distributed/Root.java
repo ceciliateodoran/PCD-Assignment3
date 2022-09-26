@@ -50,6 +50,8 @@ public class Root {
         Map<String, Object> overrides = new HashMap<>();
 
         overrides.put("akka.log-level", "DEBUG"); // akka debug
+        overrides.put("akka.stdout-loglevel", "OFF");
+        overrides.put("akka.loglevel", "OFF");
         overrides.put("akka.actor.provider", "cluster");
         overrides.put("akka.discovery.method", "config");
         overrides.put("akka.remote.artery.enabled", "on");
@@ -84,20 +86,21 @@ public class Root {
 
     private static void createClusterNodes(final List<String> clusterSeedNodes, final Map<String, Object> overrides, final int clusterRootPort) {
         int sensorsCounter = 0;
-        String coordinatorRemotePath;
+        String coordinatorRemotePath, barrackRemotePath;
 
         for (final CityZone zone : calculatorZone.setSensorsInZones()) {
             int zoneNumber = zone.getIndex();
 
-            System.out.println("ZoneCoordinator " + zoneNumber);
-            coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
-            ActorSystem.create(rootZoneBehavior(zone.getIdZone(), zoneNumber), CLUSTER_NAME,
-                    setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
-            clusterSeedNodes.add(PATH + (DEFAULT_ZONES_PORT + zoneNumber));
-
             // creation of Barracks and its GUIs
+            barrackRemotePath = PATH + (DEFAULT_BARRACK_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR + "Barrack" + zoneNumber;
             ActorSystem.create(rootBarrackBehaviour(zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT + zoneNumber));
+
+            System.out.println("ZoneCoordinator " + zoneNumber);
+            coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
+            ActorSystem.create(rootZoneBehavior(zone.getIdZone(), zoneNumber, barrackRemotePath), CLUSTER_NAME,
+                    setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
+            clusterSeedNodes.add(PATH + (DEFAULT_ZONES_PORT + zoneNumber));
 
             for (final Map.Entry<String, Pair<Integer, Integer>> zoneSensors : zone.getSensors().entrySet()) {
                 sensorsCounter++;
@@ -121,9 +124,9 @@ public class Root {
         return ConfigFactory.parseMap(configs).withFallback(ConfigFactory.load());
     }
 
-    private static Behavior<CoordinatorZone> rootZoneBehavior(final String zoneID, final int zoneNumber) {
+    private static Behavior<CoordinatorZone> rootZoneBehavior(final String zoneID, final int zoneNumber, final String barrackPath) {
         return Behaviors.setup(context -> {
-            context.spawn(CoordinatorZone.create(zoneID, zoneNumber), zoneID);
+            context.spawn(CoordinatorZone.create(zoneID, barrackPath, zoneNumber), zoneID);
             return Behaviors.same();
         });
     }

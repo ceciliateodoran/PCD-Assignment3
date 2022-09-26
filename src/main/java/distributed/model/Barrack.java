@@ -29,6 +29,8 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private Barrack(final ActorContext<ValueMsg> context, final int z) {
         super(context);
         zone = z;
+        this.isSilenced = false;
+        this.status = "OK";
         this.sensors = new ArrayList<>();
     }
 
