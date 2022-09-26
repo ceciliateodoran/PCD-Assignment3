@@ -1,7 +1,7 @@
 package distributed.model;
 
 import akka.actor.ActorPath;
-import akka.actor.ActorRef;
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -13,7 +13,9 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Barrack extends AbstractBehavior<ValueMsg> {
@@ -21,20 +23,24 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private static int zone;
     private String status;
     private Boolean isSilenced;
-    private final String GUIAddress;
     private Map<String, Double> floodedSensors;
+    private  static ActorRef<Topic.Command<BarrackStatus>> topic;
 
-    private Barrack(final ActorContext<ValueMsg> context, final int z, final String GUIaddress) {
+    private Barrack(final ActorContext<ValueMsg> context, final int z) {
         super(context);
-        this.zone = z;
-        this.GUIAddress = GUIaddress;
+        zone = z;
         this.floodedSensors = new HashMap<>();
     }
 
     //COMPORTAMENTO: manda a te stesso un messaggio ogni tot millisecondi per ricordarti di mandare il tuo stato alla GUI
 
-    public static Behavior<ValueMsg> create(final int z, final String GUIaddress) {
+    public static Behavior<ValueMsg> create(final int z) {
         return Behaviors.setup(ctx -> {
+            topic = ctx.spawn(Topic.create(BarrackStatus.class, "my-topic"), "MyTopic");
+            //TODO remove subscription once we tested
+
+            //topic.tell(Topic.subscribe(ctx.getSelf()));
+
             /*
              * Viene creata la caserma specificandogli questo comportamento:
              *   il seguente Behavior una volta impostato è tale da "attivare la caserma " tramite un messaggio
@@ -42,7 +48,7 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
              * */
             return Behaviors.setup(
                 context -> {
-                    Barrack b = new Barrack(ctx, z, GUIaddress);
+                    Barrack b = new Barrack(ctx, z);
                     return Behaviors.withTimers(
                         t -> {
                             t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
@@ -65,11 +71,8 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
 
     private Behavior<ValueMsg> sendStatus(final RecordValueMsg msg){
         System.out.println("Sending message from barrack of zone " + zone);
-        //TODO change to broadcast
-        getContext().classicActorContext()
-                .actorSelection(ActorPath.fromString(this.GUIAddress))
-                .tell(new BarrackStatus(status, ZonedDateTime.now(), floodedSensors), ActorRef.noSender());
-
+        // #publish
+        topic.tell(Topic.publish(new BarrackStatus(status, ZonedDateTime.now(), floodedSensors)));
         return Behaviors.same();
     }
 
