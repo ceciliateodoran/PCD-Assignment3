@@ -1,14 +1,17 @@
 package distributed.messages;
 
+import distributed.model.SensorSnapshot;
+
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 public class ZoneStatus extends ValueMsg {
     private final String status;
     private final ZonedDateTime dateTimeStamp;
-    private final Map<String, Double> snapshot;
+    private final List<SensorSnapshot> snapshot;
 
-    public ZoneStatus(String status, ZonedDateTime dateTimeStamp, Map<String, Double> snapshot) {
+    public ZoneStatus(String status, ZonedDateTime dateTimeStamp, List<SensorSnapshot> snapshot) {
         this.status = status;
         this.dateTimeStamp = dateTimeStamp;
         this.snapshot = snapshot;
@@ -22,7 +25,7 @@ public class ZoneStatus extends ValueMsg {
         return dateTimeStamp;
     }
 
-    public Map<String, Double> getSnapshot() {
+    public List<SensorSnapshot> getSnapshot() {
         return snapshot;
     }
 }

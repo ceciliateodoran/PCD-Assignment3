@@ -23,13 +23,13 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private static int zone;
     private String status;
     private Boolean isSilenced;
-    private Map<String, Double> floodedSensors;
+    private List<SensorSnapshot> sensors;
     private  static ActorRef<Topic.Command<BarrackStatus>> topic;
 
     private Barrack(final ActorContext<ValueMsg> context, final int z) {
         super(context);
         zone = z;
-        this.floodedSensors = new HashMap<>();
+        this.sensors = new ArrayList<>();
     }
 
     //COMPORTAMENTO: manda a te stesso un messaggio ogni tot millisecondi per ricordarti di mandare il tuo stato alla GUI
@@ -72,7 +72,7 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private Behavior<ValueMsg> sendStatus(final RecordValueMsg msg){
         System.out.println("Sending message from barrack of zone " + zone);
         // #publish
-        topic.tell(Topic.publish(new BarrackStatus(status, ZonedDateTime.now(), floodedSensors)));
+        topic.tell(Topic.publish(new BarrackStatus(status, ZonedDateTime.now(), sensors)));
         return Behaviors.same();
     }
 
@@ -83,7 +83,7 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
         if(this.status.equals("OK") && !this.isSilenced && msg.getStatus().equals("CRYSIS")){
             this.status = "CRYSIS";
         }
-        this.floodedSensors = msg.getSnapshot();
+        this.sensors = msg.getSnapshot();
         return  Behaviors.same();
     }
 
