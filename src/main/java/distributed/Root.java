@@ -97,9 +97,6 @@ public class Root {
             ActorSystem.create(rootBarrackBehaviour(zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT + zoneNumber));
 
-            // TODO: da eliminare
-            ActorSystem.create(rootSubscriberBehavoiur(), CLUSTER_NAME, setConfig(overrides, Arrays.asList(PATH + clusterRootPort), 7080 + zoneNumber));
-
             System.out.println("ZoneCoordinator " + zoneNumber);
             coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
             ActorSystem.create(rootZoneBehavior(zone.getIdZone(), zoneNumber, barrackRemotePath), CLUSTER_NAME,
@@ -146,13 +143,6 @@ public class Root {
         return Behaviors.setup(context -> {
             context.spawn(Barrack.create(zoneNumber), "Barrack" + zoneNumber); // da cambiare la create di Barrack
             //context.spawn(ViewActor.create(context.getSelf(), 0, 0), "ClientView"); // da cambiare la create di ViewActor
-            return Behaviors.same();
-        });
-    }
-
-    private static Behavior<Subscriber> rootSubscriberBehavoiur() {
-        return Behaviors.setup(context -> {
-            context.spawn(Subscriber.create(), "Subscriber");
             return Behaviors.same();
         });
     }
