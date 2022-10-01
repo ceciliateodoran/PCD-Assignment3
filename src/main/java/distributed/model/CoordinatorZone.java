@@ -46,8 +46,8 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     @Override
     public Receive<ValueMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(ValueMsg.class, this::requestSensorsData)
                 .onMessage(DetectedValueMsg.class, this::evaluateData)
+                .onMessage(ValueMsg.class, this::requestSensorsData)
                 .build();
     }
 
@@ -73,7 +73,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     }
 
     private Behavior<ValueMsg> evaluateData(final DetectedValueMsg msg) {
-        System.out.println("msg getseq = "+ msg.getSeqNumber()+" this seqnumb = "+this.seqNumber);
+        //System.out.println("msg getseq = "+ msg.getSeqNumber()+" this seqnumb = "+this.seqNumber);
         if(msg.getSeqNumber().equals(this.seqNumber)) {
             System.out.println("added sensor");
             SensorSnapshot snapshot = new SensorSnapshot(msg.getSensorCoords(), msg.getWaterLevel(), msg.getLimit(), msg.getSensorID(), msg.getDateTimeStamp());

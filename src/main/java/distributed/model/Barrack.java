@@ -29,29 +29,24 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
         this.isSilenced = false;
         this.status = "OK";
         this.sensors = new ArrayList<>();
+        topic = context.spawn(Topic.create(BarrackStatus.class, "my-topic"), "MyTopic");
     }
 
     //COMPORTAMENTO: manda a te stesso un messaggio ogni tot millisecondi per ricordarti di mandare il tuo stato alla GUI
 
     public static Behavior<ValueMsg> create(final int z) {
         return Behaviors.setup(ctx -> {
-            topic = ctx.spawn(Topic.create(BarrackStatus.class, "my-topic"), "MyTopic");
-
             /*
              * Viene creata la caserma specificandogli questo comportamento:
              *   il seguente Behavior una volta impostato è tale da "attivare la caserma " tramite un messaggio
              *   (ValueMsg) che invia ogni N millisecondi
              * */
-            return Behaviors.setup(
-                context -> {
-                    Barrack b = new Barrack(ctx, z);
-                    return Behaviors.withTimers(
-                        t -> {
-                            t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
-                            return b;
-                        }
-                    );
-                }
+            Barrack b = new Barrack(ctx, z);
+            return Behaviors.withTimers(
+                    t -> {
+                        t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
+                        return b;
+                    }
             );
         });
     }

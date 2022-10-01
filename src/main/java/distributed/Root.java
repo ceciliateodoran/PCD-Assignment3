@@ -93,9 +93,11 @@ public class Root {
             int zoneNumber = zone.getIndex();
 
             // creation of Barracks and its GUIs
+            System.out.println("Barrack " + zoneNumber);
             barrackRemotePath = PATH + (DEFAULT_BARRACK_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR + "Barrack" + zoneNumber;
             ActorSystem.create(rootBarrackBehaviour(zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT + zoneNumber));
+            clusterSeedNodes.add(PATH + (DEFAULT_BARRACK_PORT + zoneNumber));
 
             System.out.println("ZoneCoordinator " + zoneNumber);
             coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
@@ -141,7 +143,7 @@ public class Root {
 
     private static Behavior<Barrack> rootBarrackBehaviour(final int zoneNumber) {
         return Behaviors.setup(context -> {
-            context.spawn(Barrack.create(zoneNumber), "Barrack" + zoneNumber); // da cambiare la create di Barrack
+            context.spawn(Barrack.create(zoneNumber), "Barrack" + zoneNumber);
             //context.spawn(ViewActor.create(context.getSelf(), 0, 0), "ClientView"); // da cambiare la create di ViewActor
             return Behaviors.same();
         });
