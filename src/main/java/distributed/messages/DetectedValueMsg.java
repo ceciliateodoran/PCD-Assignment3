@@ -12,13 +12,11 @@ public class DetectedValueMsg extends ValueMsg {
     private int sensorZone;
     private String sensorID;
     private Pair<Integer, Integer> sensorCoords;
-    private final String seqNumber;
 
-    public DetectedValueMsg(final int zone, final String sensorID, final double value, final double limit, final Pair<Integer, Integer> sensorCoords, String seqNumber) {
+    public DetectedValueMsg(final int zone, final String sensorID, final double value, final double limit, final Pair<Integer, Integer> sensorCoords) {
         this.sensorZone = zone;
         this.sensorID = sensorID;
         this.waterLevel = value;
-        this.seqNumber = seqNumber;
         this.dateTimeStamp = ZonedDateTime.now();
         this.limit = limit;
         this.sensorCoords = sensorCoords;
@@ -44,7 +42,6 @@ public class DetectedValueMsg extends ValueMsg {
         return sensorID;
     }
 
-    public String getSeqNumber() { return seqNumber; }
     @Override
     public String toString() {
         return "DetectedValueMsg{" +

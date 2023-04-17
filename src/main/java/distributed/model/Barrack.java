@@ -1,5 +1,6 @@
 package distributed.model;
 
+import akka.actor.ActorPath;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -13,7 +14,9 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Barrack extends AbstractBehavior<ValueMsg> {
 
@@ -36,6 +39,9 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     public static Behavior<ValueMsg> create(final int z) {
         return Behaviors.setup(ctx -> {
             topic = ctx.spawn(Topic.create(BarrackStatus.class, "my-topic"), "MyTopic");
+            //TODO remove subscription once we tested
+
+            //topic.tell(Topic.subscribe(ctx.getSelf()));
 
             /*
              * Viene creata la caserma specificandogli questo comportamento:
@@ -76,8 +82,8 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private Behavior<ValueMsg> evaluateZoneData(final ZoneStatus msg) {
         Logger log = this.getContext().getSystem().log();
         log.info("Message received from Coordinator" + zone + " : " + msg.toString());
-        if(this.status.equals("OK") && !this.isSilenced && msg.getStatus().equals("FLOOD")){
-            this.status = "FLOOD";
+        if(this.status.equals("OK") && !this.isSilenced && msg.getStatus().equals("CRYSIS")){
+            this.status = "CRYSIS";
         }
         this.sensors = msg.getSnapshot();
         return  Behaviors.same();
@@ -92,7 +98,7 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
 
     //COMPORTAMENTO: committa la caserma alla gestione dell'allarme, passa dallo stato CRYSIS allo stato COMMITTED
     private Behavior<ValueMsg> commitBarrack(final SilenceBarrack msg) {
-        if(this.status.equals("FLOOD")) this.status = "COMMITTED";
+        if(this.status.equals("CRYSIS")) this.status = "COMMITTED";
         return  Behaviors.same();
     }
 
