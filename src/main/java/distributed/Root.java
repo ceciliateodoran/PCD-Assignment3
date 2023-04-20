@@ -34,7 +34,7 @@ public class Root {
     private static final int DEFAULT_ZONES_PORT = 2550;
     private static final int DEFAULT_SENSORS_PORT = 2660;
     private static final int DEFAULT_BARRACK_PORT = 2870;
-    private City city;
+    private static City city;
     private static CalculatorZone calculatorZone;
     private static ActorSystem<Void> clusterRootNode;
 
@@ -127,7 +127,7 @@ public class Root {
 
     private static Behavior<CoordinatorZone> rootZoneBehavior(final String zoneID, final int zoneNumber, final String barrackPath) {
         return Behaviors.setup(context -> {
-            context.spawn(CoordinatorZone.create(zoneID, barrackPath, zoneNumber), zoneID);
+            context.spawn(CoordinatorZone.create(zoneID, barrackPath, zoneNumber, city.getSensors()), zoneID);
             return Behaviors.same();
         });
     }
