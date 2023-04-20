@@ -8,6 +8,7 @@ import akka.actor.typed.javadsl.*;
 import akka.japi.Pair;
 import distributed.messages.DetectedValueMsg;
 import distributed.messages.RecordValueMsg;
+import distributed.messages.RequestSensorDataMsg;
 import distributed.messages.ValueMsg;
 import jnr.ffi.annotations.In;
 
@@ -28,12 +29,17 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         this.zone = z;
         this.coordinatorPath = cp;
         this.spaceCoords = sc;
-        this.limit = new Random().nextDouble();
+        this.limit = 150;
         this.value = -1;
     }
 
     private void updateValue() {
-        this.value = new Random().nextDouble();
+        if(zone == 1){
+            this.value = 300;
+        } else {
+            this.value = new Random().nextInt(300);
+        }
+
     }
 
     public static Behavior<ValueMsg> create(final String id, final int z, final String cp, final Pair<Integer, Integer> sc) {
@@ -58,10 +64,18 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     @Override
     public Receive<ValueMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(RecordValueMsg.class, this::sendData)
+                .onMessage(RecordValueMsg.class, this::updateData)
+                .onMessage(RequestSensorDataMsg.class, this::configureIterationAndSend)
                 .build();
     }
 
+    private Behavior<ValueMsg> configureIterationAndSend(RequestSensorDataMsg msg){
+        System.out.println("Sending message from sensor " + id);
+        getContext().classicActorContext()
+                .actorSelection(ActorPath.fromString(this.coordinatorPath))
+                .tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords, msg.getSeqNumber()), ActorRef.noSender());
+        return Behaviors.same();
+    }
     /**
      * Quando il Behavior del sensore invia un messaggio al sensore stesso,
      * esso legge/produce un nuovo valore e lo invia al coordinatore della propria zona
@@ -69,13 +83,8 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
      * @param msg - inviato dal Behavior del sensore
      * @return
      */
-    private Behavior<ValueMsg> sendData(final RecordValueMsg msg) {
+    private Behavior<ValueMsg> updateData(final RecordValueMsg msg) {
         this.updateValue();
-        System.out.println("Sending message from sensor " + id);
-        // Example of sending messages
-        getContext().classicActorContext()
-                .actorSelection(ActorPath.fromString(this.coordinatorPath))
-                .tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords), ActorRef.noSender());
 
         return Behaviors.same();
     }
