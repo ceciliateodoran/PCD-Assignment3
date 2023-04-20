@@ -9,21 +9,22 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.pubsub.Topic;
 import distributed.messages.*;
-import org.slf4j.Logger;
+
+import java.util.ArrayList;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Random;
 
 public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     private final String id;
     private final String barrackAddress;
-    private  int zone;
+    private int zone;
     private final List<SensorSnapshot> sensorSnapshots;
     private String seqNumber;
-    private  akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic;
+    private akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic;
     private final int numSensors;
+    private boolean firstIterationFlag = true;
 
     private CoordinatorZone(final ActorContext<ValueMsg> context, final String id, final String barrackAddress, final int z, final int nSensors) {
         super(context);
@@ -31,16 +32,16 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
         this.barrackAddress = barrackAddress;
         this.zone = z;
         this.sensorSnapshots = new ArrayList<>();
-        this.topic = context.spawn(Topic.create(ValueMsg.class, "zone-"+zone+"-channel"), "zone-"+zone+"-topic");
+        this.topic = context.spawn(Topic.create(ValueMsg.class, "zone-" + zone + "-channel"), "zone-" + zone + "-topic");
         this.numSensors = nSensors;
     }
 
     public static Behavior<ValueMsg> create(final String id, final String barrackAddress, final int z, final int numSensors) {
-        return Behaviors.setup(ctx ->{
+        return Behaviors.setup(ctx -> {
             CoordinatorZone coordinator = new CoordinatorZone(ctx, id, barrackAddress, z, numSensors);
             return Behaviors.withTimers(t -> {
-               t.startTimerAtFixedRate(new ValueMsg(), Duration.ofMillis(8000));
-               return coordinator;
+                t.startTimerAtFixedRate(new FirstIterationMsg(), Duration.ofMillis(8000));
+                return coordinator;
             });
         });
     }
@@ -49,42 +50,46 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     public Receive<ValueMsg> createReceive() {
         return newReceiveBuilder()
                 .onMessage(DetectedValueMsg.class, this::evaluateData)
-                .onMessage(ValueMsg.class, this::requestSensorsData)
+                .onMessage(FirstIterationMsg.class, this::executeFirstIteration)
+                .onMessage(TriggerSendToBarrack.class, this::sendStatusAndReset)
                 .build();
     }
 
-    private Behavior<ValueMsg> requestSensorsData(final ValueMsg msg) {
+    private Behavior<ValueMsg> executeFirstIteration(FirstIterationMsg msg) {
+        if(firstIterationFlag){
+            this.firstIterationFlag = false;
+            seqNumber = String.valueOf(new Random().nextInt());
+            topic.tell(Topic.publish(new RequestSensorDataMsg(seqNumber)));
+        }
+        return Behaviors.same();
+    }
+    private Behavior<ValueMsg> sendStatusAndReset(final TriggerSendToBarrack msg) {
         long overflownSensorNumber = this.sensorSnapshots.stream().filter(ss -> ss.getValue() > ss.getLimit()).count();
-        String status = overflownSensorNumber > (sensorSnapshots.size()/2) ? "FLOOD" : "OK";
-        System.out.println("zone "+this.zone+" status: " + status);
+        String status = overflownSensorNumber > (sensorSnapshots.size() / 2) ? "FLOOD" : "OK";
+        System.out.println("zone " + this.zone + " status: " + status + this.sensorSnapshots.size());
 
         //send message to barrack
         getContext().classicActorContext()
                 .actorSelection(ActorPath.fromString(this.barrackAddress))
                 .tell(new ZoneStatus(status, this.sensorSnapshots), ActorRef.noSender());
 
-        System.out.println("ZONE "+zone+" Sensor list size: "+ this.sensorSnapshots.size());
-
-        //clear sensor snapshots and generate a new sequence number
-        sensorSnapshots.clear();
-        this.seqNumber = UUID.randomUUID().toString();
-        System.out.println(this.seqNumber);
-
-        //request sensor data
-        topic.tell(Topic.publish(new ValueMsg(this.seqNumber)));
+        this.sensorSnapshots.clear();
+        seqNumber = String.valueOf(new Random().nextInt());
+        topic.tell(Topic.publish(new RequestSensorDataMsg(seqNumber)));
         return Behaviors.same();
     }
 
     private Behavior<ValueMsg> evaluateData(final DetectedValueMsg msg) {
-        if(msg.getSeqNumber().equals(this.seqNumber)) {
+        if (msg.getSeqNumber().equals(this.seqNumber)) {
             SensorSnapshot snapshot = new SensorSnapshot(msg.getSensorCoords(), msg.getWaterLevel(), msg.getLimit(), msg.getSensorID(), msg.getDateTimeStamp());
             this.sensorSnapshots.removeIf(s -> s.getId().equals(msg.getSensorID()));
             this.sensorSnapshots.add(snapshot);
         }
-        if(sensorSnapshots.size() == this.numSensors) {
-            System.out.println("all sensors received of zone "+this.zone);
+        if (sensorSnapshots.size() == this.numSensors) {
+            System.out.println("all sensors received of zone " + this.zone);
             this.getContext().getSelf().tell(new ValueMsg());
         }
         return Behaviors.same();
     }
+
 }

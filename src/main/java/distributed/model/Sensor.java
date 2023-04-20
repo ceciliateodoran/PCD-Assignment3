@@ -5,11 +5,14 @@ import akka.actor.ActorPath;
 import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
-import akka.actor.typed.pubsub.Topic;
 import akka.japi.Pair;
-import distributed.messages.*;
+import distributed.messages.DetectedValueMsg;
+import distributed.messages.RecordValueMsg;
+import distributed.messages.RequestSensorDataMsg;
+import distributed.messages.ValueMsg;
 import jnr.ffi.annotations.In;
 
+import java.time.Duration;
 import java.util.Random;
 
 public class Sensor extends AbstractBehavior<ValueMsg> {
@@ -19,7 +22,6 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     private double limit;
     private String coordinatorPath;
     private Pair<Integer, Integer> spaceCoords;
-    private akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic;
 
     public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final String cp, final Pair<Integer, Integer> sc) {
         super(context);
@@ -27,27 +29,53 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         this.zone = z;
         this.coordinatorPath = cp;
         this.spaceCoords = sc;
-        this.limit = new Random().nextDouble();
+        this.limit = 150;
         this.value = -1;
-        this.topic = context.spawn(Topic.create(ValueMsg.class, "zone-"+zone+"-channel"), "zone-"+zone+"-topic");
-        this.topic.tell(Topic.subscribe(context.getSelf()));
     }
 
     private void updateValue() {
-        this.value = new Random().nextDouble();
+        if(zone == 1){
+            this.value = 300;
+        } else {
+            this.value = new Random().nextInt(300);
+        }
+
     }
 
     public static Behavior<ValueMsg> create(final String id, final int z, final String cp, final Pair<Integer, Integer> sc) {
-        return Behaviors.setup(context -> new Sensor(context, id, z, cp, sc));
+        /*
+         * Viene creato il sensore specificandogli questo comportamento:
+         *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
+         *   (ValueMsg) che invia ogni N millisecondi
+         * */
+        return Behaviors.setup(
+                context -> {
+                    Sensor s = new Sensor(context, id, z, cp, sc);
+                    return Behaviors.withTimers(
+                            t -> {
+                                t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
+                                return s;
+                            }
+                    );
+                }
+        );
     }
 
     @Override
     public Receive<ValueMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(ValueMsg.class, this::sendData)
+                .onMessage(RecordValueMsg.class, this::updateData)
+                .onMessage(RequestSensorDataMsg.class, this::configureIterationAndSend)
                 .build();
     }
 
+    private Behavior<ValueMsg> configureIterationAndSend(RequestSensorDataMsg msg){
+        System.out.println("Sending message from sensor " + id);
+        getContext().classicActorContext()
+                .actorSelection(ActorPath.fromString(this.coordinatorPath))
+                .tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords, msg.getSeqNumber()), ActorRef.noSender());
+        return Behaviors.same();
+    }
     /**
      * Quando il Behavior del sensore invia un messaggio al sensore stesso,
      * esso legge/produce un nuovo valore e lo invia al coordinatore della propria zona
@@ -55,13 +83,8 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
      * @param msg - inviato dal Behavior del sensore
      * @return
      */
-    private Behavior<ValueMsg> sendData(final ValueMsg msg) {
+    private Behavior<ValueMsg> updateData(final RecordValueMsg msg) {
         this.updateValue();
-        System.out.println("Sending message from sensor " + id);
-
-        getContext().classicActorContext()
-                .actorSelection(ActorPath.fromString(this.coordinatorPath))
-                .tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords, msg.getValue()), ActorRef.noSender());
 
         return Behaviors.same();
     }
