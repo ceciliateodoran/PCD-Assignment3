@@ -41,8 +41,8 @@ public class CalculatorZone {
         int yOffset = this.city.getHeight() / (this.city.getGridRows() + 1);
         List<CityZone> cityZones = new ArrayList<>();
 
-        for (int i = 0; i < this.city.getGridRows() + 1; i++) {
-            for (int j = 0; j < this.city.getGridColumns() + 1; j++) {
+        for (int i = 0; i < this.city.getGridRows(); i++) {
+            for (int j = 0; j < this.city.getGridColumns(); j++) {
                 x = xOffset * j;
                 y = yOffset * i;
                 index++;

@@ -11,10 +11,10 @@ public class City {
     private int sensors;
 
     public City(final int w, final int h, final int gridRows, final int gridColumns, final int numOfSensors) {
-        this.width = w;
-        this.height = h;
-        this.gridRows = gridRows;
-        this.gridColumns = gridColumns;
+        this.width = w<gridColumns ? gridColumns : w;
+        this.height = h<gridRows ? gridRows : h;
+        this.gridRows = gridRows<1 ? 1 : gridRows;
+        this.gridColumns = gridColumns<1 ? 1 : gridColumns;
         this.sensors = numOfSensors;
     }
 
