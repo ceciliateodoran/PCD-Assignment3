@@ -19,26 +19,28 @@ import java.util.Random;
 public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     private final String id;
     private final String barrackAddress;
-    private int zone;
+    private final int zone;
     private final List<SensorSnapshot> sensorSnapshots;
     private String seqNumber;
     private akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic;
     private final int numSensors;
     private boolean firstIterationFlag = true;
 
-    private CoordinatorZone(final ActorContext<ValueMsg> context, final String id, final String barrackAddress, final int z, final int nSensors) {
+    private CoordinatorZone(final ActorContext<ValueMsg> context, final String id, final String barrackAddress, final int z,
+                            final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final int nSensors) {
         super(context);
         this.id = id;
         this.barrackAddress = barrackAddress;
         this.zone = z;
         this.sensorSnapshots = new ArrayList<>();
-        this.topic = context.spawn(Topic.create(ValueMsg.class, "zone-" + zone + "-channel"), "zone-" + zone + "-topic");
+        this.topic = topic;
         this.numSensors = nSensors;
     }
 
-    public static Behavior<ValueMsg> create(final String id, final String barrackAddress, final int z, final int numSensors) {
+    public static Behavior<ValueMsg> create(final String id, final String barrackAddress, final int z,
+                                            final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final int numSensors) {
         return Behaviors.setup(ctx -> {
-            CoordinatorZone coordinator = new CoordinatorZone(ctx, id, barrackAddress, z, numSensors);
+            CoordinatorZone coordinator = new CoordinatorZone(ctx, id, barrackAddress, z, topic, numSensors);
             return Behaviors.withTimers(t -> {
                 t.startTimerAtFixedRate(new FirstIterationMsg(), Duration.ofMillis(8000));
                 return coordinator;
