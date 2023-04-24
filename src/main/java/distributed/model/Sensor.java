@@ -5,6 +5,7 @@ import akka.actor.ActorPath;
 import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
+import akka.actor.typed.pubsub.Topic;
 import akka.japi.Pair;
 import distributed.messages.DetectedValueMsg;
 import distributed.messages.RecordValueMsg;
@@ -22,8 +23,10 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     private double limit;
     private String coordinatorPath;
     private Pair<Integer, Integer> spaceCoords;
+    private akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic;
 
-    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final String cp, final Pair<Integer, Integer> sc) {
+    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final String cp,
+                  final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final Pair<Integer, Integer> sc) {
         super(context);
         this.id = id;
         this.zone = z;
@@ -31,6 +34,7 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         this.spaceCoords = sc;
         this.limit = 150;
         this.value = -1;
+        this.topic = topic;
     }
 
     private void updateValue() {
@@ -42,7 +46,8 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
 
     }
 
-    public static Behavior<ValueMsg> create(final String id, final int z, final String cp, final Pair<Integer, Integer> sc) {
+    public static Behavior<ValueMsg> create(final String id, final int z, final String cp,
+                                            final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final Pair<Integer, Integer> sc) {
         /*
          * Viene creato il sensore specificandogli questo comportamento:
          *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
@@ -50,7 +55,8 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
          * */
         return Behaviors.setup(
                 context -> {
-                    Sensor s = new Sensor(context, id, z, cp, sc);
+                    Sensor s = new Sensor(context, id, z, cp, topic, sc);
+                    topic.tell(Topic.subscribe(context.getSelf()));
                     return Behaviors.withTimers(
                             t -> {
                                 t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
