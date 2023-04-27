@@ -35,7 +35,7 @@ public class Subscriber extends AbstractBehavior<BarrackStatus> {
     }
 
     public Behavior<BarrackStatus> onPublish(final BarrackStatus msg) {
-        System.out.println("Publish message received");
+        //System.out.println("Publish message received");
         return Behaviors.same();
     }
 }
