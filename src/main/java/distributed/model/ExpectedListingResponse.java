@@ -2,5 +2,6 @@ package distributed.model;
 
 public enum ExpectedListingResponse {
     SENSORS,
-    BARRACKS
+    BARRACKS,
+    GUIS
 }

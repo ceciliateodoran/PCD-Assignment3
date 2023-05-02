@@ -1,31 +1,23 @@
 package distributed.messages;
 
-import distributed.model.SensorSnapshot;
-
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
 
 public class BarrackStatus extends ValueMsg {
     private final String status;
     private final ZonedDateTime dateTimeStamp;
-    private final List<SensorSnapshot> snapshot;
+    private final int zone;
 
-    public BarrackStatus(String status, ZonedDateTime dateTimeStamp, List<SensorSnapshot> snapshot) {
+    public BarrackStatus(String status, ZonedDateTime dateTimeStamp, int zone) {
         this.status = status;
         this.dateTimeStamp = dateTimeStamp;
-        this.snapshot = snapshot;
+        this.zone = zone;
     }
 
     public String getStatus() {
         return status;
     }
-
+    public int getZone() { return zone; }
     public ZonedDateTime getDateTimeStamp() {
         return dateTimeStamp;
-    }
-
-    public List<SensorSnapshot> getSnapshot() {
-        return snapshot;
     }
 }

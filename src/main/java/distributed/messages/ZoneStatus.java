@@ -17,10 +17,11 @@ public class ZoneStatus extends ValueMsg {
         this.partialData = partialData;
     }
 
+    public int getZone() { return zone; }
     public String getStatus() {
         return status;
     }
-
+    public boolean getPartialData() { return partialData; }
     public List<SensorSnapshot> getSnapshot() {
         return snapshot;
     }
