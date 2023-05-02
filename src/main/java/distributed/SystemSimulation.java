@@ -6,10 +6,10 @@ public class SystemSimulation {
     public static void main(String[] args) {
         City city = new City(400, 200, 1, 3, 5);
         if (args.length == 0) {
-            Root root = new Root(city);
+            Deployer root = new Deployer(city);
             root.startup(2440);
         } else {
-            Arrays.stream(args).map(Integer::parseInt).forEach(Root::startup);
+            Arrays.stream(args).map(Integer::parseInt).forEach(Deployer::startup);
         }
     }
 }

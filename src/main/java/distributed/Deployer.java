@@ -9,14 +9,11 @@ import akka.japi.Pair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import distributed.messages.ValueMsg;
-import distributed.model.Barrack;
-import distributed.model.CoordinatorZone;
-import distributed.model.Sensor;
-import distributed.model.Subscriber;
+import distributed.model.*;
 import distributed.utils.CalculatorZone;
 import java.util.*;
 
-public class Root {
+public class Deployer {
     private static final String CLUSTER_NAME = "PluviometerCluster";
     private static final String DEFAULT_HOSTNAME = "127.0.0.1";
     private static final String PATH = "akka://" + CLUSTER_NAME + "@" + DEFAULT_HOSTNAME + ":";
@@ -27,8 +24,7 @@ public class Root {
     private static City city;
     private static CalculatorZone calculatorZone;
     private static ActorSystem<Void> clusterRootNode;
-    private static akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> zoneTopic;
-    public Root(final City c) {
+    public Deployer(final City c) {
         this.city = c;
         this.calculatorZone = new CalculatorZone(this.city);
     }
@@ -72,6 +68,7 @@ public class Root {
         }
     }
     private static void createClusterNodes(final Map<String, Object> overrides, final int clusterRootPort) {
+        IdGenerator idGen = new IdGenerator();
         int sensorsCounter = 0;
         String coordinatorRemotePath, barrackRemotePath;
 
@@ -80,7 +77,6 @@ public class Root {
 
             // creation of Barracks and its GUIs
             System.out.println("Barrack " + zoneNumber);
-            barrackRemotePath = PATH + (DEFAULT_BARRACK_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR + "Barrack" + zoneNumber;
             ActorSystem.create(rootBarrackBehaviour(zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT + zoneNumber));
 
@@ -89,15 +85,14 @@ public class Root {
 
             System.out.println("ZoneCoordinator " + zoneNumber);
             coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
-            ActorSystem.create(rootZoneBehavior(zone.getIdZone(), zoneNumber, barrackRemotePath), CLUSTER_NAME,
+            ActorSystem.create(rootZoneBehavior(idGen.getZoneId(zoneNumber), zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT + zoneNumber));
 
             for (final Map.Entry<String, Pair<Integer, Integer>> zoneSensors : zone.getSensors().entrySet()) {
                 sensorsCounter++;
                 System.out.println("Sensor " + sensorsCounter);
                 // Create an actor that handles cluster domain events
-                ActorSystem.create(rootSensorBehavior(zoneSensors.getKey(), zoneNumber,
-                                coordinatorRemotePath + zone.getIdZone(), zoneTopic, zoneSensors.getValue()), CLUSTER_NAME,
+                ActorSystem.create(rootSensorBehavior(idGen.getSensorId(zoneNumber,sensorsCounter), zoneNumber, zoneSensors.getValue()), CLUSTER_NAME,
                         setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT + sensorsCounter));
             }
         }
@@ -109,17 +104,15 @@ public class Root {
         System.out.println(configs);
         return ConfigFactory.parseMap(configs).withFallback(ConfigFactory.load());
     }
-    private static Behavior<CoordinatorZone> rootZoneBehavior(final String zoneID, final int zoneNumber, final String barrackPath) {
+    private static Behavior<CoordinatorZone> rootZoneBehavior(final String zoneID, final int zoneNumber) {
         return Behaviors.setup(context -> {
-            zoneTopic = context.spawn(Topic.create(ValueMsg.class, "zone-" + zoneNumber + "-channel"), "zone-" + zoneNumber + "-topic");
-            context.spawn(CoordinatorZone.create(zoneID, barrackPath, zoneNumber, zoneTopic, city.getSensors()), zoneID);
+            context.spawn(CoordinatorZone.create(zoneID, zoneNumber, city.getSensors()), zoneID);
             return Behaviors.same();
         });
     }
-    private static Behavior<Sensor> rootSensorBehavior(final String sensorID, final int zoneNumber, final String sensorCoordPath,
-                                                       final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final Pair<Integer, Integer> spaceCoords) {
+    private static Behavior<Sensor> rootSensorBehavior(final String sensorID, final int zoneNumber, final Pair<Integer, Integer> spaceCoords) {
         return Behaviors.setup(context -> {
-            context.spawn(Sensor.create(sensorID, zoneNumber, sensorCoordPath, topic, spaceCoords), sensorID);
+            context.spawn(Sensor.create(sensorID, zoneNumber, spaceCoords), sensorID);
             return Behaviors.same();
         });
     }

@@ -5,13 +5,13 @@ import akka.actor.ActorPath;
 import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
-import akka.actor.typed.pubsub.Topic;
+import akka.actor.typed.receptionist.Receptionist;
+import akka.actor.typed.receptionist.ServiceKey;
 import akka.japi.Pair;
 import distributed.messages.DetectedValueMsg;
-import distributed.messages.RecordValueMsg;
+import distributed.messages.UpdateSelfStatusMsg;
 import distributed.messages.RequestSensorDataMsg;
 import distributed.messages.ValueMsg;
-import jnr.ffi.annotations.In;
 
 import java.time.Duration;
 import java.util.Random;
@@ -21,20 +21,16 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     private int zone;
     private double value;
     private double limit;
-    private String coordinatorPath;
     private Pair<Integer, Integer> spaceCoords;
-    private akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic;
+    private static final IdGenerator idGenerator = new IdGenerator();
 
-    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final String cp,
-                  final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final Pair<Integer, Integer> sc) {
+    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final Pair<Integer, Integer> sc) {
         super(context);
         this.id = id;
         this.zone = z;
-        this.coordinatorPath = cp;
         this.spaceCoords = sc;
         this.limit = 150;
         this.value = -1;
-        this.topic = topic;
     }
 
     private void updateValue() {
@@ -46,8 +42,7 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
 
     }
 
-    public static Behavior<ValueMsg> create(final String id, final int z, final String cp,
-                                            final akka.actor.typed.ActorRef<Topic.Command<ValueMsg>> topic, final Pair<Integer, Integer> sc) {
+    public static Behavior<ValueMsg> create(final String id, final int z, final Pair<Integer, Integer> sc) {
         /*
          * Viene creato il sensore specificandogli questo comportamento:
          *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
@@ -55,11 +50,14 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
          * */
         return Behaviors.setup(
                 context -> {
-                    Sensor s = new Sensor(context, id, z, cp, topic, sc);
-                    topic.tell(Topic.subscribe(context.getSelf()));
+                    Sensor s = new Sensor(context, id, z, sc);
+                    //subscribe to receptionist
+                    context.getSystem()
+                            .receptionist()
+                            .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getZoneId(z)+"-sensors"), context.getSelf()));
                     return Behaviors.withTimers(
                             t -> {
-                                t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
+                                t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
                                 return s;
                             }
                     );
@@ -70,16 +68,14 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     @Override
     public Receive<ValueMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(RecordValueMsg.class, this::updateData)
+                .onMessage(UpdateSelfStatusMsg.class, this::updateData)
                 .onMessage(RequestSensorDataMsg.class, this::configureIterationAndSend)
                 .build();
     }
 
     private Behavior<ValueMsg> configureIterationAndSend(RequestSensorDataMsg msg){
         System.out.println("Sending message from sensor " + id);
-        getContext().classicActorContext()
-                .actorSelection(ActorPath.fromString(this.coordinatorPath))
-                .tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords, msg.getSeqNumber()), ActorRef.noSender());
+        msg.getReplyTo().tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords, msg.getSeqNumber()));
         return Behaviors.same();
     }
     /**
@@ -89,11 +85,12 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
      * @param msg - inviato dal Behavior del sensore
      * @return
      */
-    private Behavior<ValueMsg> updateData(final RecordValueMsg msg) {
+    private Behavior<ValueMsg> updateData(final UpdateSelfStatusMsg msg) {
         this.updateValue();
-
         return Behaviors.same();
     }
+
+
 
     @Override
     public String toString() {
@@ -101,7 +98,6 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
                 "id='" + id + '\'' +
                 ", zone=" + zone +
                 ", value=" + value +
-                ", coordinatorPath='" + coordinatorPath + '\'' +
                 ", spaceCoords=" + spaceCoords +
                 '}';
     }

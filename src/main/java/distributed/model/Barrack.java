@@ -1,6 +1,5 @@
 package distributed.model;
 
-import akka.actor.ActorPath;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -14,9 +13,7 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Barrack extends AbstractBehavior<ValueMsg> {
 
@@ -53,7 +50,7 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
                     Barrack b = new Barrack(ctx, z);
                     return Behaviors.withTimers(
                         t -> {
-                            t.startTimerAtFixedRate(new RecordValueMsg(), Duration.ofMillis(10000));
+                            t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
                             return b;
                         }
                     );
@@ -65,13 +62,13 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     @Override
     public Receive<ValueMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(RecordValueMsg.class, this::sendStatus)
+                .onMessage(UpdateSelfStatusMsg.class, this::sendStatus)
                 .onMessage(ZoneStatus.class, this::evaluateZoneData)
                 .onMessage(SilenceBarrack.class, this::silenceBarrack)
                 .build();
     }
 
-    private Behavior<ValueMsg> sendStatus(final RecordValueMsg msg){
+    private Behavior<ValueMsg> sendStatus(final UpdateSelfStatusMsg msg){
         System.out.println("Sending message from barrack of zone " + zone);
         // #publish
         topic.tell(Topic.publish(new BarrackStatus(status, ZonedDateTime.now(), sensors)));
