@@ -7,8 +7,10 @@ import akka.actor.typed.pubsub.Topic;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import akka.japi.Pair;
+import distributed.messages.CityStatus;
 import distributed.messages.ValueMsg;
 import distributed.messages.ZoneStatus;
+import distributed.model.Barrack;
 import distributed.model.CoordinatorZone;
 import distributed.model.IdGenerator;
 import distributed.model.Sensor;
@@ -22,7 +24,7 @@ public class test {
     @ClassRule public static final TestKitJunitResource testKit = new TestKitJunitResource();
 
     @Test
-    public void testSomething() throws InterruptedException {
+    public void testCoordinatorZone() throws InterruptedException {
         TestProbe<ValueMsg> probe = testKit.createTestProbe();
         Thread.sleep(3000);
         testKit.system().receptionist().tell(Receptionist.register(ServiceKey.create(ValueMsg.class, "barracks"), probe.ref()));
@@ -36,5 +38,26 @@ public class test {
         testKit.spawn(CoordinatorZone.create(idGen.getZoneId(0), 0, 3));
         Thread.sleep(6000);
         probe.expectMessageClass(ZoneStatus.class);
+    }
+
+    @Test
+    public void testBarrack() throws InterruptedException {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
+        Thread.sleep(3000);
+        testKit.system().receptionist().tell(Receptionist.register(ServiceKey.create(ValueMsg.class, "gui:0"), probe.ref()));
+        Thread.sleep(3000);
+        List<Sensor> sensors = new ArrayList<>();
+        IdGenerator idGen = new IdGenerator();
+        for (int j = 0; j < 3; j++){
+            for (int i = 0; i < 3; i++){
+                testKit.spawn(Sensor.create(idGen.getSensorId(j, i), 0, new Pair<>(0,0)));
+                Thread.sleep(500);
+            }
+            testKit.spawn(CoordinatorZone.create(idGen.getZoneId(j), j, 3));
+            testKit.spawn(Barrack.create(j));
+        }
+
+        Thread.sleep(6000);
+        probe.expectMessageClass(CityStatus.class);
     }
 }

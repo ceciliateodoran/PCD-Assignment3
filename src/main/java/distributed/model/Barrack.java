@@ -42,11 +42,14 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
 
     public static Behavior<ValueMsg> create(final int z) {
         return Behaviors.setup(context -> {
-            //TODO remove subscription once we tested
             //subscribe to receptionist
             context.getSystem()
                     .receptionist()
                     .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, "barracks"), context.getSelf()));
+
+            context.getSystem()
+                    .receptionist()
+                    .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, "barrack:" + z), context.getSelf()));
             /*
              * Viene creata la caserma specificandogli questo comportamento:
              *   il seguente Behavior una volta impostato è tale da "attivare la caserma " tramite un messaggio
@@ -77,16 +80,20 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
     private Behavior<ValueMsg> updateOtherBarracks(final BarrackStatus msg){
         if(msg.getZone() != this.zone){
             barracks.put(msg.getZone(), msg.getStatus());
+            city.put(msg.getZone(), msg.getSensorValues());
         }
         return Behaviors.same();
     }
     private Behavior<ValueMsg> sendStatus(final UpdateSelfStatusMsg msg){
         System.out.println("Sending message from barrack of zone " + zone);
         // #publish
-        this.getContext()
-                .getSystem()
-                .receptionist()
-                .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, "barracks"), this.listingResponseAdapter));
+        if(this.expectedListingResponse == ExpectedListingResponse.BARRACKS) {
+            this.getContext()
+                    .getSystem()
+                    .receptionist()
+                    .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, "barracks"), this.listingResponseAdapter));
+        }
+
         return Behaviors.same();
     }
 
@@ -128,22 +135,22 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
             case BARRACKS:
                 //send status to barracks then reset and ask new status to sensors
                 msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, "barracks"))
-                        .forEach(b -> b.tell(new BarrackStatus(status, ZonedDateTime.now(), zone)));
+                        .forEach(b -> b.tell(new BarrackStatus(status, ZonedDateTime.now(), zone, city.get(this.zone))));
                 this.expectedListingResponse = ExpectedListingResponse.GUIS;
                 this.getContext()
                         .getSystem()
                         .receptionist()
-                        .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, "gui:"+zone), this.listingResponseAdapter));
+                        .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, "gui:" + zone), this.listingResponseAdapter));
                 break;
 
             case GUIS:
                 //send to your guis the city status and your barrack status
-                msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, "gui:"+zone))
+                msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, "gui:" + zone))
                         .forEach(gui -> {
                             gui.tell(new CityStatus(city));
-                            gui.tell(new BarrackStatus(status, ZonedDateTime.now(), zone));
                         });
                 this.expectedListingResponse = ExpectedListingResponse.BARRACKS;
+                break;
         }
         return Behaviors.same();
     }
