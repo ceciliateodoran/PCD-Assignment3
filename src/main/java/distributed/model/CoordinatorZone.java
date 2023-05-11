@@ -46,9 +46,6 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
     public static Behavior<ValueMsg> create(final String id, final int z, final int numSensors) {
         return Behaviors.setup(context -> {
             CoordinatorZone coordinator = new CoordinatorZone(context, id, z, numSensors);
-            context.getSystem()
-                    .receptionist()
-                    .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getZoneId(z)), context.getSelf()));
             return Behaviors.withTimers(t -> {
                 t.startTimerAtFixedRate(new FirstIterationMsg(), Duration.ofMillis(8000));
                 return coordinator;
@@ -73,7 +70,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
             this.getContext()
                     .getSystem()
                     .receptionist()
-                    .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getZoneId(zone)+"-sensors"), this.listingResponseAdapter));
+                    .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getSensorsKey(this.zone)), this.listingResponseAdapter));
         }
         return Behaviors.same();
     }
@@ -87,7 +84,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
         this.getContext()
                 .getSystem()
                 .receptionist()
-                .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, "barracks"), this.listingResponseAdapter));
+                .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getBarrackId(this.zone)), this.listingResponseAdapter));
         return Behaviors.same();
     }
 
@@ -108,7 +105,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
         switch (this.expectedListingResponse){
             case SENSORS: {
                 this.reachedSensors.clear();
-                this.reachedSensors.addAll(msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, idGenerator.getZoneId(zone)+"-sensors")));
+                this.reachedSensors.addAll(msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, idGenerator.getSensorsKey(this.zone))));
                 this.partialData = this.reachedSensors.size() != this.numSensors;
                 this.reachedSensors.forEach(sensor -> sensor.tell(new RequestSensorDataMsg(this.seqNumber, this.getContext().getSelf())));
                 break;
@@ -116,7 +113,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
 
             case BARRACKS: {
                 //send status to barracks then reset and ask new status to sensors
-                msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, "barracks"))
+                msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, idGenerator.getBarrackKey(this.zone)))
                         .forEach(b -> b.tell(new ZoneStatus(zone, status, sensorSnapshots, partialData)));
                 this.sensorSnapshots.clear();
                 seqNumber = String.valueOf(new Random().nextInt());
@@ -124,7 +121,7 @@ public class CoordinatorZone extends AbstractBehavior<ValueMsg> {
                 this.getContext()
                         .getSystem()
                         .receptionist()
-                        .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getZoneId(zone)+"-sensors"), this.listingResponseAdapter));
+                        .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getSensorsKey(this.zone)), this.listingResponseAdapter));
                 break;
             }
         }

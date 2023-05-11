@@ -20,48 +20,44 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     private String id;
     private int zone;
     private double value;
-    private double limit;
+    private final double limit;
     private Pair<Integer, Integer> spaceCoords;
     private static final IdGenerator idGenerator = new IdGenerator();
 
-    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final Pair<Integer, Integer> sc) {
+    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final Pair<Integer, Integer> sc, double limit) {
         super(context);
         this.id = id;
         this.zone = z;
         this.spaceCoords = sc;
-        this.limit = 150;
+        this.limit = limit;
         this.value = -1;
     }
 
     private void updateValue() {
-        if(zone == 1){
-            this.value = 300;
-        } else {
-            this.value = new Random().nextInt(300);
-        }
-
+        Long upperLimit = Math.round(this.limit + this.limit/2);
+        this.value = new Random().nextInt(Integer.parseInt(upperLimit.toString()));
     }
 
-    public static Behavior<ValueMsg> create(final String id, final int z, final Pair<Integer, Integer> sc) {
+    public static Behavior<ValueMsg> create(final String id, final int z, final Pair<Integer, Integer> sc, double limit) {
         /*
          * Viene creato il sensore specificandogli questo comportamento:
          *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
          *   (ValueMsg) che invia ogni N millisecondi
          * */
         return Behaviors.setup(
-                context -> {
-                    Sensor s = new Sensor(context, id, z, sc);
-                    //subscribe to receptionist
-                    context.getSystem()
-                            .receptionist()
-                            .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getZoneId(z)+"-sensors"), context.getSelf()));
-                    return Behaviors.withTimers(
-                            t -> {
-                                t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
-                                return s;
-                            }
-                    );
-                }
+            context -> {
+                Sensor s = new Sensor(context, id, z, sc, limit);
+                //subscribe to receptionist
+                context.getSystem()
+                        .receptionist()
+                        .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getSensorsKey(z)), context.getSelf()));
+                return Behaviors.withTimers(
+                        t -> {
+                            t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
+                            return s;
+                        }
+                );
+            }
         );
     }
 
@@ -90,14 +86,13 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         return Behaviors.same();
     }
 
-
-
     @Override
     public String toString() {
         return "Sensor{" +
                 "id='" + id + '\'' +
                 ", zone=" + zone +
                 ", value=" + value +
+                ", limit=" + limit +
                 ", spaceCoords=" + spaceCoords +
                 '}';
     }

@@ -80,9 +80,6 @@ public class Deployer {
             ActorSystem.create(rootBarrackBehaviour(zoneNumber), CLUSTER_NAME,
                     setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT + zoneNumber));
 
-            // TODO: da eliminare
-            ActorSystem.create(rootSubscriberBehavoiur(), CLUSTER_NAME, setConfig(overrides, Arrays.asList(PATH + clusterRootPort), 7080 + zoneNumber));
-
             System.out.println("ZoneCoordinator " + zoneNumber);
             coordinatorRemotePath = PATH + (DEFAULT_ZONES_PORT + zoneNumber) + DEFAULT_GUARD_ACTOR;
             ActorSystem.create(rootZoneBehavior(idGen.getZoneId(zoneNumber), zoneNumber), CLUSTER_NAME,
@@ -92,7 +89,7 @@ public class Deployer {
                 sensorsCounter++;
                 System.out.println("Sensor " + sensorsCounter);
                 // Create an actor that handles cluster domain events
-                ActorSystem.create(rootSensorBehavior(idGen.getSensorId(zoneNumber,sensorsCounter), zoneNumber, zoneSensors.getValue()), CLUSTER_NAME,
+                ActorSystem.create(rootSensorBehavior(idGen.getSensorId(zoneNumber,sensorsCounter), zoneNumber, zoneSensors.getValue(), city.getLimit()), CLUSTER_NAME,
                         setConfig(overrides, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT + sensorsCounter));
             }
         }
@@ -110,9 +107,9 @@ public class Deployer {
             return Behaviors.same();
         });
     }
-    private static Behavior<Sensor> rootSensorBehavior(final String sensorID, final int zoneNumber, final Pair<Integer, Integer> spaceCoords) {
+    private static Behavior<Sensor> rootSensorBehavior(final String sensorID, final int zoneNumber, final Pair<Integer, Integer> spaceCoords, double limit) {
         return Behaviors.setup(context -> {
-            context.spawn(Sensor.create(sensorID, zoneNumber, spaceCoords), sensorID);
+            context.spawn(Sensor.create(sensorID, zoneNumber, spaceCoords, limit), sensorID);
             return Behaviors.same();
         });
     }

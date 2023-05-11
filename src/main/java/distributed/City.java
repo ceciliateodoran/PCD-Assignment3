@@ -9,13 +9,15 @@ public class City {
     private int gridColumns;
 
     private int sensors;
+    private final double limit;
 
-    public City(final int w, final int h, final int gridRows, final int gridColumns, final int numOfSensors) {
+    public City(final int w, final int h, final int gridRows, final int gridColumns, final int numOfSensors, final double limit) {
         this.width = w<gridColumns ? gridColumns : w;
         this.height = h<gridRows ? gridRows : h;
         this.gridRows = gridRows<1 ? 1 : gridRows;
         this.gridColumns = gridColumns<1 ? 1 : gridColumns;
         this.sensors = numOfSensors;
+        this.limit = limit;
     }
 
     public int getWidth() {
@@ -37,6 +39,8 @@ public class City {
     public int getSensors() {
         return sensors;
     }
+
+    public double getLimit() { return limit; }
 
     @Override
     public String toString() {

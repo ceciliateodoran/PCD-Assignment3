@@ -26,13 +26,14 @@ public class test {
     @Test
     public void testCoordinatorZone() throws InterruptedException {
         TestProbe<ValueMsg> probe = testKit.createTestProbe();
+        IdGenerator idGen = new IdGenerator();
         Thread.sleep(3000);
-        testKit.system().receptionist().tell(Receptionist.register(ServiceKey.create(ValueMsg.class, "barracks"), probe.ref()));
+        testKit.system().receptionist().tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGen.getBarrackKey(0)), probe.ref()));
         Thread.sleep(3000);
         List<Sensor> sensors = new ArrayList<>();
-        IdGenerator idGen = new IdGenerator();
+
         for (int i = 0; i < 3; i++){
-            testKit.spawn(Sensor.create(idGen.getSensorId(0, i), 0, new Pair<>(0,0)));
+            testKit.spawn(Sensor.create(idGen.getSensorId(0, i), 0, new Pair<>(0,0), 100));
             Thread.sleep(3000);
         }
         testKit.spawn(CoordinatorZone.create(idGen.getZoneId(0), 0, 3));
@@ -43,14 +44,14 @@ public class test {
     @Test
     public void testBarrack() throws InterruptedException {
         TestProbe<ValueMsg> probe = testKit.createTestProbe();
+        IdGenerator idGen = new IdGenerator();
         Thread.sleep(3000);
-        testKit.system().receptionist().tell(Receptionist.register(ServiceKey.create(ValueMsg.class, "gui:0"), probe.ref()));
+        testKit.system().receptionist().tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGen.getGuisKey(0)), probe.ref()));
         Thread.sleep(3000);
         List<Sensor> sensors = new ArrayList<>();
-        IdGenerator idGen = new IdGenerator();
         for (int j = 0; j < 3; j++){
             for (int i = 0; i < 3; i++){
-                testKit.spawn(Sensor.create(idGen.getSensorId(j, i), 0, new Pair<>(0,0)));
+                testKit.spawn(Sensor.create(idGen.getSensorId(j, i), 0, new Pair<>(0,0), 100));
                 Thread.sleep(500);
             }
             testKit.spawn(CoordinatorZone.create(idGen.getZoneId(j), j, 3));
