@@ -7,6 +7,11 @@ import Footer from "./components/Footer.vue";
     components: {Footer, Header},
     data() {
       return {
+        gridRows: 0,
+        gridColumns: 0,
+        numSensors: 0,
+        barrackStatus: "not available",
+        zoneStatus: "not available",
         selectedCity: null,
         cities: [
           { name: 'New York', code: 'NY' },
@@ -27,23 +32,29 @@ import Footer from "./components/Footer.vue";
     <div class="p-float-label">
       <DropDown v-model="selectedCity" :options="cities" optionLabel="name" placeholder="Seleziona la Zona" class="w-full md:w-14rem" />
     </div>
+
     <div v-if="selectedCity">
-      <div>
-        <p># Pluviometri</p>
-        <p></p>
-      </div>
-      <div>
-        <p>Status Caserma</p>
-        <p></p>
-      </div>
-      <div>
-        <p>Status Zona {{this.selectedCity}}</p>
-        <p></p>
-      </div>
+      <section>
+        <div class="paragraph">
+          <p># Pluviometri</p>
+          <p>{{this.numSensors}}</p>
+        </div>
 
-      <canvas id="myCanvas" width="800" height="200" style="border:1px solid #000000;">
+        <div class="paragraph">
+          <p>Status Caserma</p>
+          <p>{{this.barrackStatus}}</p>
+        </div>
 
-      </canvas>
+        <div class="paragraph">
+          <p>Status Zona {{this.selectedCity["name"]}}</p>
+          <p>{{this.zoneStatus}}</p>
+
+          <ButtonComp v-if="zoneStatus === 'ALLARME'" type="button" icon="pi pi-exclamation-triangle" label="GESTISCI ALLARME" @click.prevent="filter()" severity="danger"/>
+          <ButtonComp v-if="zoneStatus === 'In Gestione'" type="button" icon="pi pi-check" label="STOP GESTIONE" @click.prevent="filter()" severity="success"/>
+        </div>
+      </section>
+
+      <canvas></canvas>
     </div>
   </main>
 

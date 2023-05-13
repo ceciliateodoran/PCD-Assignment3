@@ -47,38 +47,32 @@ h1{
     margin: 20px 0px 20px 0px;
 }
 
+p{
+    display: inline;
+    margin: 0px;
+}
+
 canvas{
     background-image: url("../assets/map2.png");
+    min-width: 100%;
+    border:1px solid #000000;
 }
 
-#nav {
-    padding: 30px;
-    text-align: left;
+section {
+    padding: 0% 25%;
+    min-width: 100%;
+    width: fit-content;
+    box-sizing: border-box;
 }
-
-a {
-    text-decoration: none;
-    font-weight: bold;
-    color: #ffff;
-}
-
-i {
-    color: #ffff;
-    margin-bottom: 40px;
-}
-
-ul{
-    list-style-type: none;
-}
-
 .paragraph{
-    display: block;
-    margin: 8px 0px 8px 0px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 15px 0px;
 }
 
 .p-button {
     background: #0D47A1;
-    margin: 10px 5px 10px 5px;
 }
 
 .p-inputtext:enabled:focus {
@@ -223,7 +217,7 @@ ul{
 
 .p-dropdown{
     width: 100%;
-    margin-bottom: 5px;
+    margin: 5px 0px;
     text-align: left;
 }
 
