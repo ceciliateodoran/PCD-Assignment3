@@ -1,20 +1,15 @@
 package distributed;
 
 import akka.actor.typed.ActorSystem;
-import akka.actor.typed.Behavior;
 import akka.actor.typed.Props;
 import akka.actor.typed.javadsl.Behaviors;
-import akka.actor.typed.pubsub.Topic;
 import akka.cluster.typed.Cluster;
-import akka.cluster.typed.Join;
 import akka.japi.Pair;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import distributed.messages.ValueMsg;
 import distributed.model.*;
 import distributed.utils.CalculatorZone;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class Deployer {
