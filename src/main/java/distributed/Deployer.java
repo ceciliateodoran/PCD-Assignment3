@@ -54,15 +54,12 @@ public class Deployer {
         // Create the Akka cluster root node in order to join all others cluster nodes
         clusterRootNode = ActorSystem.create(Behaviors.ignore(), CLUSTER_NAME, setConfig(settings, Arrays.asList(PATH + clusterRootPort), clusterRootPort));
 
-        barrackNode = ActorSystem.create(Behaviors.empty(), CLUSTER_NAME,
-                setConfig(settings, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT));
-        coordinatorZoneNode = ActorSystem.create(Behaviors.empty(), CLUSTER_NAME,
-                setConfig(settings, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT));
-        sensorNode = ActorSystem.create(Behaviors.empty(), CLUSTER_NAME,
-                setConfig(settings, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT));
+        barrackNode = ActorSystem.create(Behaviors.empty(), CLUSTER_NAME, setConfig(settings, Arrays.asList(PATH + clusterRootPort), DEFAULT_BARRACK_PORT));
+        coordinatorZoneNode = ActorSystem.create(Behaviors.empty(), CLUSTER_NAME, setConfig(settings, Arrays.asList(PATH + clusterRootPort), DEFAULT_ZONES_PORT));
+        sensorNode = ActorSystem.create(Behaviors.empty(), CLUSTER_NAME, setConfig(settings, Arrays.asList(PATH + clusterRootPort), DEFAULT_SENSORS_PORT));
 
         // Create an Akka ActorSystem for each node in the cluster representing sensors or zone coordinators
-        createClusterNodes(settings, clusterRootPort);
+        createClusterNodes();
 
         /**
          * Debug of cluster
@@ -77,7 +74,7 @@ public class Deployer {
             throw new RuntimeException(e);
         }
     }
-    private static void createClusterNodes(final Map<String, Object> overrides, final int clusterRootPort) {
+    private static void createClusterNodes() {
         IdGenerator idGen = new IdGenerator();
         int sensorsCounter = 1;
 
