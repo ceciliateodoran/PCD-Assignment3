@@ -54,8 +54,6 @@ p{
 
 canvas{
     background-image: url("../assets/map2.png");
-    min-width: 100%;
-    border:1px solid #000000;
 }
 
 section {

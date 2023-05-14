@@ -2,23 +2,22 @@
 import { defineComponent } from "vue";
 import Header from "./components/Header.vue";
 import Footer from "./components/Footer.vue";
+import CanvasGrid from "./components/CanvasGrid.vue";
 
   export default defineComponent({
-    components: {Footer, Header},
+    components: {Header, Footer, CanvasGrid},
     data() {
       return {
-        gridRows: 0,
-        gridColumns: 0,
         numSensors: 0,
         barrackStatus: "not available",
-        zoneStatus: "not available",
-        selectedCity: null,
-        cities: [
-          { name: 'New York', code: 'NY' },
-          { name: 'Rome', code: 'RM' },
-          { name: 'London', code: 'LDN' },
-          { name: 'Istanbul', code: 'IST' },
-          { name: 'Paris', code: 'PRS' }
+        zoneStatus: "ALLARME",
+        selectedZone: null,
+        zones: [
+          { name: 'Zona1', code: 'Z1' },
+          { name: 'Zona2', code: 'Z2' },
+          { name: 'Zona3', code: 'Z3' },
+          { name: 'Zona4', code: 'Z4' },
+          { name: 'Zona5', code: 'Z5' }
         ]
       };
     }
@@ -30,10 +29,10 @@ import Footer from "./components/Footer.vue";
 
   <main>
     <div class="p-float-label">
-      <DropDown v-model="selectedCity" :options="cities" optionLabel="name" placeholder="Seleziona la Zona" class="w-full md:w-14rem" />
+      <DropDown v-model="selectedZone" :options="zones" optionLabel="name" placeholder="Seleziona la Zona" class="w-full md:w-14rem" />
     </div>
 
-    <div v-if="selectedCity">
+    <div v-if="selectedZone">
       <section>
         <div class="paragraph">
           <p># Pluviometri</p>
@@ -46,15 +45,14 @@ import Footer from "./components/Footer.vue";
         </div>
 
         <div class="paragraph">
-          <p>Status Zona {{this.selectedCity["name"]}}</p>
+          <p>Status {{ this.selectedZone["name"] }}</p>
           <p>{{this.zoneStatus}}</p>
 
           <ButtonComp v-if="zoneStatus === 'ALLARME'" type="button" icon="pi pi-exclamation-triangle" label="GESTISCI ALLARME" @click.prevent="filter()" severity="danger"/>
           <ButtonComp v-if="zoneStatus === 'In Gestione'" type="button" icon="pi pi-check" label="STOP GESTIONE" @click.prevent="filter()" severity="success"/>
         </div>
       </section>
-
-      <canvas></canvas>
+      <CanvasGrid/>
     </div>
   </main>
 
