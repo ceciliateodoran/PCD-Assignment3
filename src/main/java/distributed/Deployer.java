@@ -56,18 +56,7 @@ public class Deployer {
         // Create an Akka ActorSystem for each node in the cluster representing sensors or zone coordinators
         createClusterNodes();
 
-        /**
-         * Debug of cluster
-         */
         Cluster cluster = Cluster.get(clusterRootNode);
-        try {
-            Thread.sleep(5000);
-            cluster.state().getMembers().forEach(x -> System.out.println("address: " + x.address()));
-            // Thread.sleep(5000);
-            // clusterRootNode.terminate(); //vedere la teoria sull'importanza dell'avere un leader del cluster + lab di akka spiegati da Aguzzi
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
     private static void createClusterNodes() {
         IdGenerator idGen = new IdGenerator();
