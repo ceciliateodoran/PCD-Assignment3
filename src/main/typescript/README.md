@@ -6,8 +6,8 @@
 npm install
 ```
 
-### Compile for Development
+### Start the Project
 
 ```sh
-npm run dev
+npm start
 ```

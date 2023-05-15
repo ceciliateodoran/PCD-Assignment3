@@ -2,7 +2,7 @@
   "name": "dsmartfloodmonitoringsystem",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "start": "vite --port 3000",
     "build": "vue-tsc && vite build",
     "preview": "vite preview"
   },
