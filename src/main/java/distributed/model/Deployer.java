@@ -1,4 +1,4 @@
-package distributed.model.actors;
+package distributed.model;
 
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;

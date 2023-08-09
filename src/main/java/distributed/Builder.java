@@ -11,7 +11,7 @@ import distributed.messages.spawn.SpawnGuiActor;
 import distributed.messages.spawn.SpawnSensorActor;
 import distributed.messages.spawn.SpawnZoneActor;
 import distributed.messages.ValueMsg;
-import distributed.model.actors.*;
+import distributed.model.*;
 import distributed.model.utility.IdGenerator;
 import distributed.utils.CalculatorZone;
 import distributed.utils.ClusterStructure;
@@ -112,28 +112,6 @@ public class Builder {
 
 
         }
-
-        clusterStructure.getZoneSystems().forEach((key, value) -> {
-            ClusterSingleton.get(clusterStructure.getZoneActorSystem(key)).init(
-                    SingletonActor.of(
-                            Behaviors.supervise(Supervisor.create(clusterStructure))
-                                    .onFailure(
-                                            SupervisorStrategy.resume()
-                                    ),
-                            "Supervisor"
-                    )
-            );
-
-            ClusterSingleton.get(clusterStructure.getZoneActorSystem(key)).init(
-                    SingletonActor.of(
-                            Behaviors.supervise(Storing.create())
-                                    .onFailure(
-                                            SupervisorStrategy.resume()
-                                    ),
-                            "Store"
-                    )
-            );
-        });
     }
 
     private static Map<String, Object> initBasicConfig() {
