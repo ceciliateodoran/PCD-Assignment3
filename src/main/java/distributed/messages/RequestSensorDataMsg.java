@@ -1,8 +1,9 @@
 package distributed.messages;
 
 import akka.actor.typed.ActorRef;
+import distributed.messages.ValueMsg;
 
-public class RequestSensorDataMsg extends ValueMsg{
+public class RequestSensorDataMsg extends ValueMsg {
     private final String seqNumber;
     private final ActorRef<ValueMsg> replyTo;
 

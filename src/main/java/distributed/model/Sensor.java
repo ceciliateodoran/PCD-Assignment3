@@ -1,36 +1,38 @@
 package distributed.model;
 
 
-import akka.actor.ActorPath;
-import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
-import akka.japi.Pair;
-import distributed.messages.DetectedValueMsg;
-import distributed.messages.UpdateSelfStatusMsg;
+import distributed.messages.statuses.SensorStatus;
+import distributed.messages.selftriggers.UpdateSelfStatusMsg;
 import distributed.messages.RequestSensorDataMsg;
 import distributed.messages.ValueMsg;
+import distributed.model.utility.IdGenerator;
+import distributed.utils.Pair;
 
 import java.time.Duration;
 import java.util.Random;
 
+/**
+ * Represents the Sensor actor implementation
+ */
 public class Sensor extends AbstractBehavior<ValueMsg> {
     private String id;
-    private int zone;
     private double value;
     private final double limit;
-    private Pair<Integer, Integer> spaceCoords;
+    private final Pair<Integer, Integer> sensorCoords;
     private static final IdGenerator idGenerator = new IdGenerator();
+    private final Integer zoneNumber;
 
-    public Sensor(final ActorContext<ValueMsg> context, final String id, final int z, final Pair<Integer, Integer> sc, double limit) {
+    private Sensor(final ActorContext<ValueMsg> context, final String id, final int zoneNumber, final Pair<Integer, Integer> sensorCoords, double limit) {
         super(context);
         this.id = id;
-        this.zone = z;
-        this.spaceCoords = sc;
+        this.sensorCoords = sensorCoords;
         this.limit = limit;
         this.value = -1;
+        this.zoneNumber = zoneNumber;
     }
 
     private void updateValue() {
@@ -38,26 +40,34 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
         this.value = new Random().nextInt(Integer.parseInt(upperLimit.toString()));
     }
 
-    public static Behavior<ValueMsg> create(final String id, final int z, final Pair<Integer, Integer> sc, double limit) {
-        /*
-         * Viene creato il sensore specificandogli questo comportamento:
-         *   il seguente Behavior una volta impostato è tale da "attivare il sensore" tramite un messaggio
-         *   (ValueMsg) che invia ogni N millisecondi
-         * */
+    /**
+     * Construct a new instance of the Sensor actor
+     *
+     * @param id The sensor identifier
+     * @param zoneNumber The number of the zone to which the sensor belongs
+     * @param sensorCoords The space coordinates of the sensor
+     * @param limit The maximum limit that the water level can reach
+     * @return The newly created instance of the sensor actor
+     */
+    public static Behavior<ValueMsg> create(final String id, final int zoneNumber, final Pair<Integer, Integer> sensorCoords, double limit) {
         return Behaviors.setup(
-            context -> {
-                Sensor s = new Sensor(context, id, z, sc, limit);
-                //subscribe to receptionist
-                context.getSystem()
-                        .receptionist()
-                        .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getSensorsKey(z)), context.getSelf()));
-                return Behaviors.withTimers(
-                        t -> {
-                            t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
-                            return s;
-                        }
-                );
-            }
+                context -> {
+                    Sensor s = new Sensor(context, id, zoneNumber, sensorCoords, limit);
+                    //subscribe to receptionist
+                    context.getSystem()
+                            .receptionist()
+                            .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getPingKey()), context.getSelf()));
+
+                    context.getSystem()
+                            .receptionist()
+                            .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getSensorsKey(zoneNumber)), context.getSelf()));
+                    return Behaviors.withTimers(
+                            t -> {
+                                t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
+                                return s;
+                            }
+                    );
+                }
         );
     }
 
@@ -70,8 +80,7 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     }
 
     private Behavior<ValueMsg> configureIterationAndSend(RequestSensorDataMsg msg){
-        System.out.println("Sending message from sensor " + id);
-        msg.getReplyTo().tell(new DetectedValueMsg(zone, id, value, this.limit, this.spaceCoords, msg.getSeqNumber()));
+        msg.getReplyTo().tell(new SensorStatus(zoneNumber, id, value, this.limit, this.sensorCoords, msg.getSeqNumber()));
         return Behaviors.same();
     }
     /**
@@ -90,10 +99,10 @@ public class Sensor extends AbstractBehavior<ValueMsg> {
     public String toString() {
         return "Sensor{" +
                 "id='" + id + '\'' +
-                ", zone=" + zone +
+                ", zone=" + zoneNumber +
                 ", value=" + value +
                 ", limit=" + limit +
-                ", spaceCoords=" + spaceCoords +
+                ", spaceCoords=" + sensorCoords +
                 '}';
     }
 }
