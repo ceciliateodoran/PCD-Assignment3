@@ -1,10 +1,5 @@
 package distributed.view;
 
-import com.mongodb.*;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import distributed.CityZone;
 import distributed.model.utility.SensorSnapshot;
 import distributed.utils.Pair;
@@ -12,10 +7,6 @@ import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import org.bson.BsonDocument;
-import org.bson.BsonInt64;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +19,6 @@ import java.util.stream.Collectors;
  */
 public class Server {
 
-    private static MongoClient mongoClient;
     private final Vertx vertx = Vertx.vertx();
     private final Router router = Router.router(vertx);
     private final HttpServer server;
@@ -137,15 +127,6 @@ public class Server {
                 return Future.succeededFuture(new JsonObject().put("sensorscoords", this.getSensorsCoordinates()));
             });
 
-        //get the history of measurements
-        this.router.get("/history")
-            .respond(ctx -> {
-                ctx.response()
-                        .putHeader("Access-Control-Allow-Origin" , "*")
-                        .putHeader("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
-                return Future.succeededFuture(new JsonObject().put("history", this.getHistory()));
-            });
-
         this.server.requestHandler(this.router).listen(8080);
     }
 
@@ -184,36 +165,6 @@ public class Server {
             sensorsInfo.add("ERROR");
         }
         return sensorsInfo.stream().sorted().collect(Collectors.toList());
-    }
-
-    private List<Document> getHistory(){
-        String uri = "mongodb://localhost:27017";
-
-        ServerApi serverApi = ServerApi.builder()
-                .version(ServerApiVersion.V1)
-                .build();
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(uri))
-                .serverApi(serverApi)
-                .build();
-        System.out.println(settings.toString());
-
-        mongoClient = MongoClients.create(settings);
-        MongoDatabase database = mongoClient.getDatabase("AkkaPluviometers");
-        try {
-            // Send a ping to confirm a successful connection
-            Bson command = new BsonDocument("ping", new BsonInt64(1));
-            Document commandResult = database.runCommand(command);
-            System.out.println("Hello!");
-        } catch (MongoException me) {
-            System.err.println(me);
-        }
-        MongoCollection<Document> collection = mongoClient.getDatabase("AkkaPluviometers").getCollection("storic");
-        List<Document> ldocs = new ArrayList<>();
-        collection.find()
-                .sort(new BasicDBObject("timestamp", -1))
-                .limit(100).forEach(d -> ldocs.add(d));
-        return ldocs;
     }
 
     private void setSelectedZone(final int zone){
