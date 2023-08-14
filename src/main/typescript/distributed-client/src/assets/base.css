@@ -53,7 +53,7 @@ p{
 }
 
 canvas{
-    background-image: url("../assets/map2.png");
+    background-image: url("../assets/map.png");
 }
 
 section {
@@ -129,27 +129,40 @@ section {
     background-color: #1565C0;
 }
 
-.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+.p-tabmenu .p-tabmenu-nav li.p-highlight .p-tabmenu-nav-link {
     color: #0D47A1;
 }
 
-.p-tabview .p-tabview-nav-btn.p-link {
+.p-tabmenu .p-tabmenu-nav-btn.p-link {
     color: #0D47A1;
 }
 
-.p-tabview .p-tabview-nav .p-tabview-ink-bar {
+.p-tabmenu .p-tabmenu-nav .p-tabmenu-ink-bar {
     background-color: #0D47A1;
 }
 
-.p-tabview .p-tabview-nav li:not(.p-highlight):not(.p-disabled):hover .p-tabview-nav-link {
+.p-tabmenu .p-tabmenu-nav li:not(.p-highlight):not(.p-disabled):hover .p-tabmenu-nav-link {
     background: rgba(13, 71, 161, 0.04);
 }
 
-.p-tabview .p-tabview-nav li .p-tabview-nav-link > .p-ink {
+.p-tabmenu .p-tabmenu-nav li .p-tabmenu-nav-link > .p-ink {
     background-color: rgba(13, 71, 161, 0.16);
 }
 
-.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus {
+.p-tabmenu .p-tabmenu-nav li .p-tabmenu-nav-link:focus {
+    background-color: rgba(13, 71, 161, 0.12);
+}
+
+.p-tabmenu .p-tabmenu-nav .p-tabmenuitem.p-highlight .p-menuitem-link{
+    color: #0D47A1;
+    background-color: rgba(13, 71, 161, 0.12);
+}
+
+.p-tabmenu .p-tabmenu-nav li.p-highlight .p-menuitem-link:focus{
+    background-color: rgba(13, 71, 161, 0.12);
+}
+
+.p-tabmenu .p-tabmenu-nav li .p-menuitem-link:focus{
     background-color: rgba(13, 71, 161, 0.12);
 }
 
