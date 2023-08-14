@@ -16,8 +16,8 @@ def versions = [
 
 dependencies {
     implementation 'junit:junit:4.13.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 
     implementation platform("com.typesafe.akka:akka-http-bom_${versions.ScalaBinary}:10.2.10") // akka HTTP import
     implementation platform("com.typesafe.akka:akka-bom_${versions.ScalaBinary}:2.6.19")
@@ -35,8 +35,11 @@ dependencies {
     implementation "com.typesafe.akka:akka-http-jackson_${versions.ScalaBinary}"
 
     /* for logging */
-    implementation 'org.slf4j:slf4j-api:1.7.36'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'org.slf4j:slf4j-jdk14:2.0.7'
+
+    /* vertx */
+    implementation 'io.vertx:vertx-web:4.4.2'
 }
 
 test {
