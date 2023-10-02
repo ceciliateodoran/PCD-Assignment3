@@ -31,7 +31,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     }
 
     @Override
-    public Receive createReceive() {
+    public Receive<ViewMsg> createReceive() {
         return newReceiveBuilder()
                 .onMessage(ViewStartMsg.class, this::onStart)
                 .onMessage(ViewStopMsg.class, this::onStop)
@@ -43,6 +43,8 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     /* aggiornamento GUI al termine delle iterazioni */
     private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
         this.viewer.updateState("Stopped");
+        controllerActorRef.tell(new ViewStopMsg());
+        this.state = false;
         return this;
     }
 

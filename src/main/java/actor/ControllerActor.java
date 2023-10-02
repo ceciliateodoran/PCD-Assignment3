@@ -1,11 +1,18 @@
 package actor;
 
+import actor.utils.Body;
+import actor.utils.BodyGenerator;
+import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * attore che crea BodyActor e ViewActor e che si occupa
@@ -28,25 +35,19 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     /* virtual time step */
     private final double dt;
 
-    private ActorRef<BodyMsg> bodyActorRef;
+    private List<ActorRef<BodyMsg>> bodyActorRefList;
 
     private ActorRef<ViewMsg> viewActorRef;
+    private Boundary bounds;
+    private int randBodyIndex;
 
     private ControllerActor(final ActorContext<ControllerMsg> context) {
         super(context);
         this.dt = 0.001;
-        resetCounters();
-        createActors(context);
-    }
-
-    private void createActors(final ActorContext<ControllerMsg> context) {
-        this.bodyActorRef = context.spawn(BodyActor.create(totBodies), "bodyActor");
-
-        // invio del messaggio di start al BodyActor (versione NO GUI)
-        // this.bodyActorRef.tell(new ComputePositionsMsg(context.getSelf(), this.dt));
-
-        // creazione della GUI
+        this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
         this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
+        resetCounters();
+        initializeBodies();
     }
 
     @Override
@@ -61,7 +62,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Start */
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
-        this.bodyActorRef.tell(new ComputePositionsMsg(this.getContext().getSelf(), this.dt));
+        this.bodyActorRefList.get(new Random().nextInt(this.bodyActorRefList.size()))
+                .tell(new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodyActorRefList, this.bounds));
         return this;
     }
 
@@ -74,7 +76,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             this.currentIter++;
 
             /* GUI version */
-            this.viewActorRef.tell(new UpdatedPositionsMsg(msg.getBodies(), this.vt, this.currentIter, msg.getBounds()));
+            this.viewActorRef.tell(new UpdatedPositionsMsg(msg.getBodies(), this.vt, this.currentIter, this.bounds));
 
             /* No-GUI version */
             /* if (this.currentIter == maxIter) {
@@ -95,13 +97,14 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         if (this.currentIter == maxIter) {
             // reset
             resetCounters();
-            this.bodyActorRef.tell(new StopMsg());
+            this.bodyActorRefList.forEach(actor -> actor.tell(new StopMsg()));
 
             //inviare msg di fine iterazioni a GUI
             this.viewActorRef.tell(new ControllerStopMsg());
         } else {
             //ricominciare il calcolo
-            this.bodyActorRef.tell(new ComputePositionsMsg(this.getContext().getSelf(), this.dt));
+            this.bodyActorRefList.get(new Random().nextInt(this.bodyActorRefList.size()))
+                    .tell(new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodyActorRefList, this.bounds));
         }
         return this;
     }
@@ -111,7 +114,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         //this.getContext().getLog().info("ControllerActor: stop message received from GUI.");
         resetCounters();
         // reset dei bodies
-        this.bodyActorRef.tell(new StopMsg());
+        this.bodyActorRefList.forEach(actor -> actor.tell(new StopMsg()));
+        initializeBodies();
         return this;
     }
 
@@ -124,8 +128,17 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return Behaviors.setup(ControllerActor::new);
     }
 
+    private void initializeBodies() {
+        BodyGenerator bg = new BodyGenerator();
+        this.bodyActorRefList = new ArrayList<>();
+        for (final Body body : bg.generateBodies(totBodies, this.bounds)) {
+            this.bodyActorRefList.add(getContext().spawn(BodyActor.create(body), "bodyActor-" + new Random().nextInt()));
+        }
+    }
+
     private void resetCounters() {
         this.currentIter = 0;
         this.vt = 0;
+        this.randBodyIndex = 0;
     }
 }

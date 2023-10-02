@@ -20,9 +20,8 @@ public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
     private Boundary bounds;
 
     /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ControllerActor */
-    public UpdatedPositionsMsg(final List<Body> allBodies, final Boundary bounds) {
+    public UpdatedPositionsMsg(final List<Body> allBodies) {
         this.bodies = allBodies;
-        this.bounds = bounds;
     }
 
     /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ViewActor */
