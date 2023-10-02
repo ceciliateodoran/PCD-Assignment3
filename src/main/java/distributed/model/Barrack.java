@@ -8,39 +8,58 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
-import akka.japi.Pair;
 import distributed.messages.*;
-import org.slf4j.Logger;
+import distributed.messages.barrack.commands.ClearBarrack;
+import distributed.messages.barrack.commands.CommitBarrack;
+import distributed.messages.barrack.commands.DesilenceBarrack;
+import distributed.messages.barrack.commands.SilenceBarrack;
+import distributed.messages.selftriggers.ListingResponse;
+import distributed.messages.selftriggers.UpdateSelfStatusMsg;
+import distributed.messages.statuses.BarrackStatus;
+import distributed.messages.statuses.CityStatus;
+import distributed.messages.statuses.ZoneStatus;
+import distributed.model.utility.ExpectedListingResponse;
+import distributed.model.utility.IdGenerator;
+import distributed.model.utility.SensorSnapshot;
+import distributed.utils.Pair;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+/**
+ * Represents the Barrack actor implementation
+ */
 public class Barrack extends AbstractBehavior<ValueMsg> {
 
-    private int zone;
-    private static IdGenerator idGenerator = new IdGenerator();
+    private static final IdGenerator idGenerator = new IdGenerator();
     private String status;
     private Boolean isSilenced;
     private final Map<Integer, Pair<List<SensorSnapshot>, Boolean>> city;
     private final Map<Integer, String> barracks;
     private final ActorRef<Receptionist.Listing> listingResponseAdapter;
     private ExpectedListingResponse expectedListingResponse;
+    private final Integer zoneNumber;
 
-    private Barrack(final ActorContext<ValueMsg> context, final int z) {
+    private Barrack(final ActorContext<ValueMsg> context, final int zoneNumber) {
         super(context);
-        this.zone = z;
         this.isSilenced = false;
         this.status = "OK";
         this.listingResponseAdapter = context.messageAdapter(Receptionist.Listing.class, ListingResponse::new);
         this.city = new HashMap<>();
+        this.city.put(zoneNumber, new Pair<>(new ArrayList<>(), true));
         this.barracks = new HashMap<>();
         this.expectedListingResponse = ExpectedListingResponse.BARRACKS;
+        this.zoneNumber = zoneNumber;
     }
 
-    //COMPORTAMENTO: manda a te stesso un messaggio ogni tot millisecondi per ricordarti di mandare il tuo stato alla GUI
-
-    public static Behavior<ValueMsg> create(final int z) {
+    /**
+     * Construct a new instance of the Barrack actor
+     *
+     * @param zoneNumber The number of the zone to which the barracks belongs
+     * @return The newly created instance of the Barrack actor
+     */
+    public static Behavior<ValueMsg> create(final int zoneNumber) {
         return Behaviors.setup(context -> {
             //subscribe to receptionist
             context.getSystem()
@@ -49,19 +68,18 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
 
             context.getSystem()
                     .receptionist()
-                    .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getBarrackKey(z)), context.getSelf()));
-            /*
-             * Viene creata la caserma specificandogli questo comportamento:
-             *   il seguente Behavior una volta impostato è tale da "attivare la caserma " tramite un messaggio
-             *   (ValueMsg) che invia ogni N millisecondi
-             * */
+                    .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getBarrackKey(zoneNumber)), context.getSelf()));
 
-            Barrack b = new Barrack(context, z);
+            context.getSystem()
+                    .receptionist()
+                    .tell(Receptionist.register(ServiceKey.create(ValueMsg.class, idGenerator.getPingKey()), context.getSelf()));
+
+            Barrack barrackActor = new Barrack(context, zoneNumber);
             return Behaviors.withTimers(
-                t -> {
-                    t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(10000));
-                    return b;
-                }
+                    t -> {
+                        t.startTimerAtFixedRate(new UpdateSelfStatusMsg(), Duration.ofMillis(2000));
+                        return barrackActor;
+                    }
             );
         });
     }
@@ -72,20 +90,23 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
                 .onMessage(UpdateSelfStatusMsg.class, this::sendStatus)
                 .onMessage(ZoneStatus.class, this::evaluateZoneData)
                 .onMessage(SilenceBarrack.class, this::silenceBarrack)
+                .onMessage(DesilenceBarrack.class, this::desilenceBarrack)
                 .onMessage(ListingResponse.class, this::onListing)
                 .onMessage(BarrackStatus.class, this::updateOtherBarracks)
+                .onMessage(CommitBarrack.class, this::commitBarrack)
+                .onMessage(ClearBarrack.class, this::clearBarrack)
                 .build();
     }
 
     private Behavior<ValueMsg> updateOtherBarracks(final BarrackStatus msg){
-        if(msg.getZone() != this.zone){
+        if(msg.getZone() != this.zoneNumber){
             barracks.put(msg.getZone(), msg.getStatus());
             this.city.put(msg.getZone(), msg.getSensorValues());
         }
         return Behaviors.same();
     }
+
     private Behavior<ValueMsg> sendStatus(final UpdateSelfStatusMsg msg){
-        System.out.println("Sending message from barrack of zone " + zone);
         // #publish
         if(this.expectedListingResponse == ExpectedListingResponse.BARRACKS) {
             this.getContext()
@@ -97,61 +118,64 @@ public class Barrack extends AbstractBehavior<ValueMsg> {
         return Behaviors.same();
     }
 
-    //COMPORTAMENTO: valuta i dati ricevuti dal controllore di zona
     private Behavior<ValueMsg> evaluateZoneData(final ZoneStatus msg) {
-        if(msg.getZone() == zone){
-            Logger log = this.getContext().getSystem().log();
-            log.info("Message received from Coordinator" + zone + " : " + msg.toString());
-            if(this.status.equals("OK") && !this.isSilenced && msg.getStatus().equals("CRYSIS")){
-                this.status = "CRYSIS";
-                this.barracks.put(this.zone, this.status);
+        if(msg.getZone() == this.zoneNumber){
+            if(this.status.equals("OK") && !this.isSilenced && msg.getStatus().equals("FLOOD")){
+                this.status = "FLOOD";
             }
-            this.city.put(msg.getZone(), Pair.create(msg.getSnapshot(), msg.getPartialData()));
+            List<SensorSnapshot> ssList = this.city.get(msg.getZone()).first();
+            ssList.clear();
+            ssList.addAll(msg.getSnapshot());
+            this.city.put(msg.getZone(), new Pair<>(ssList, msg.getPartialData()));
         }
+        this.barracks.put(this.zoneNumber, this.status);
         return  Behaviors.same();
     }
 
-    //COMPORTAMENTO: silenzia o desilenzia la caserma in base ai messaggi dalla GUI
     private Behavior<ValueMsg> silenceBarrack(final SilenceBarrack msg) {
-        if(!this.isSilenced) this.status = "OK"; //se non era silenziata vuol dire che ora sta venendo silenziata, quindi imposta lo stato a OK ignorando tutto
-        this.isSilenced = !this.isSilenced;
+        if(!this.isSilenced) this.status = "SILENCED";
+        this.isSilenced = true;
         return  Behaviors.same();
     }
 
-    //COMPORTAMENTO: committa la caserma alla gestione dell'allarme, passa dallo stato CRYSIS allo stato COMMITTED
-    private Behavior<ValueMsg> commitBarrack(final SilenceBarrack msg) {
-        if(this.status.equals("CRYSIS")) this.status = "COMMITTED";
+    private Behavior<ValueMsg> desilenceBarrack(final DesilenceBarrack msg) {
+        if(this.isSilenced) this.status = "OK";
+        this.isSilenced = false;
         return  Behaviors.same();
     }
 
-    //COMPORTAMENTO: allarme gestito, torna allo stato OK
-    private Behavior<ValueMsg> clearBarrack(final SilenceBarrack msg) {
+    private Behavior<ValueMsg> commitBarrack(final CommitBarrack msg) {
+        if(this.status.equals("FLOOD")) this.status = "COMMITTED";
+        return  Behaviors.same();
+    }
+
+    private Behavior<ValueMsg> clearBarrack(final ClearBarrack msg) {
         if(this.status.equals("COMMITTED")) this.status = "OK";
         return  Behaviors.same();
     }
 
     private Behavior<ValueMsg> onListing(ListingResponse msg) {
-        switch(this.expectedListingResponse){
-            case BARRACKS:
-                //send status to barracks then reset and ask new status to sensors
+        if(msg.listing.getKey().id().equals("barracks")) {
+            if (!this.city.get(this.zoneNumber).first().isEmpty()) {
                 msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, idGenerator.getBarracksKey()))
-                        .forEach(b -> b.tell(new BarrackStatus(status, ZonedDateTime.now(), zone, city.get(this.zone))));
-                this.expectedListingResponse = ExpectedListingResponse.GUIS;
-                this.getContext()
-                        .getSystem()
-                        .receptionist()
-                        .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getGuisKey(this.zone)), this.listingResponseAdapter));
-                break;
-
-            case GUIS:
-                //send to your guis the city status and your barrack status
-                msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, idGenerator.getGuisKey(this.zone)))
-                        .forEach(gui -> {
-                            gui.tell(new CityStatus(city));
-                        });
-                this.expectedListingResponse = ExpectedListingResponse.BARRACKS;
-                break;
+                        .forEach(b -> b.tell(new BarrackStatus(status, ZonedDateTime.now(), zoneNumber, this.city.get(this.zoneNumber))));
+            }
+            this.expectedListingResponse = ExpectedListingResponse.GUIS;
+            this.getContext()
+                    .getSystem()
+                    .receptionist()
+                    .tell(Receptionist.find(ServiceKey.create(ValueMsg.class, idGenerator.getGuisKey(this.zoneNumber)), this.listingResponseAdapter));
+        } else {
+            //send to your guis the city status and your barrack status
+            msg.listing.getServiceInstances(ServiceKey.create(ValueMsg.class, idGenerator.getGuisKey(this.zoneNumber)))
+                    .forEach(gui -> {
+                        if (!city.isEmpty()) {
+                            gui.tell(new CityStatus(city, barracks));
+                        }
+                    });
+            this.expectedListingResponse = ExpectedListingResponse.BARRACKS;
         }
+
         return Behaviors.same();
     }
 }
