@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private Body body;
     private int totBodies;
+
     private double dt;
     private Boundary bounds;
     private ActorRef<ControllerMsg> replyTo;
