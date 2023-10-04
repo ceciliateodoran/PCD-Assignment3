@@ -10,9 +10,8 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * attore che crea BodyActor e ViewActor e che si occupa
@@ -20,6 +19,7 @@ import java.util.Random;
  * sia di segnalare al BodyActor l'inizio e la terminazione del processo di calcolo
  */
 public class ControllerActor extends AbstractBehavior<ControllerMsg> {
+    private static final double DISTANCE_FROM_BODY = 10;
     private static int totBodies;
 
     private static int maxIter;
@@ -34,12 +34,11 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     /* virtual time step */
     private final double dt;
-
     private List<ActorRef<BodyMsg>> bodyActorRefList;
-
     private ActorRef<ViewMsg> viewActorRef;
     private Boundary bounds;
-    private int randBodyIndex;
+    private List<Body> bodies;
+    private int currentBodyIndex;
 
     private ControllerActor(final ActorContext<ControllerMsg> context) {
         super(context);
@@ -62,8 +61,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Start */
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
-        this.bodyActorRefList.get(new Random().nextInt(this.bodyActorRefList.size()))
-                .tell(new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodyActorRefList, this.bounds));
+        this.bodyActorRefList.get(currentBodyIndex)
+                .tell(new ComputePositionsMsg(getContext().getSelf(), this.dt, nearestBodiesAtFixedDistance(bodies.get(currentBodyIndex++)), this.bounds));
         return this;
     }
 
@@ -76,7 +75,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             this.currentIter++;
 
             /* GUI version */
-            this.viewActorRef.tell(new UpdatedPositionsMsg(msg.getBodies(), this.vt, this.currentIter, this.bounds));
+
+            // aggiorno la lista locale di body con i nuovi valori
+            msg.getIndexBodyMap().forEach((index, body) -> this.bodies.set(index, body));
+
+            // invio i nuovi valori dei body ad ogni rispettivo attore body
+            msg.getIndexBodyMap().forEach((index, body) -> this.bodyActorRefList.get(index).tell(new UpdateBody(body)));
+
+            // aggiorno la GUI
+            this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
 
             /* No-GUI version */
             /* if (this.currentIter == maxIter) {
@@ -102,9 +109,11 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             //inviare msg di fine iterazioni a GUI
             this.viewActorRef.tell(new ControllerStopMsg());
         } else {
+            if (currentBodyIndex == bodies.size())
+                currentBodyIndex = 0;
             //ricominciare il calcolo
-            this.bodyActorRefList.get(new Random().nextInt(this.bodyActorRefList.size()))
-                    .tell(new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodyActorRefList, this.bounds));
+            this.bodyActorRefList.get(currentBodyIndex)
+                    .tell(new ComputePositionsMsg(getContext().getSelf(), this.dt, nearestBodiesAtFixedDistance(bodies.get(currentBodyIndex++)), this.bounds));
         }
         return this;
     }
@@ -130,8 +139,12 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private void initializeBodies() {
         BodyGenerator bg = new BodyGenerator();
+
         this.bodyActorRefList = new ArrayList<>();
+        this.bodies = new ArrayList<>();
+
         for (final Body body : bg.generateBodies(totBodies, this.bounds)) {
+            this.bodies.add(body);
             this.bodyActorRefList.add(getContext().spawn(BodyActor.create(body), "bodyActor-" + new Random().nextInt()));
         }
     }
@@ -139,6 +152,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private void resetCounters() {
         this.currentIter = 0;
         this.vt = 0;
-        this.randBodyIndex = 0;
+        this.currentBodyIndex = 0;
+    }
+
+    private List<Body> nearestBodiesAtFixedDistance(final Body b) {
+        return this.bodies.stream().filter(body -> body.getDistanceFrom(b) <= DISTANCE_FROM_BODY).collect(Collectors.toList());
     }
 }

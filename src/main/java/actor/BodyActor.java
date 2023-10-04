@@ -10,6 +10,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +22,6 @@ import java.util.stream.Collectors;
  */
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private Body body;
-    private Map<ActorRef<BodyMsg>, Body> bodies;
-    private int numReceivedBodies;
     private int totBodies;
     private double dt;
     private Boundary bounds;
@@ -31,10 +30,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     private BodyActor(final ActorContext<BodyMsg> context, final Body b) {
         super(context);
         this.body = b;
-        this.numReceivedBodies = 0;
         this.totBodies = 0;
-        this.dt = 0;
-        this.bodies = new HashMap<>();
     }
 
     @Override
@@ -42,8 +38,6 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return newReceiveBuilder()
                 .onMessage(ComputePositionsMsg.class, this::onNewIteration)
                 .onMessage(StopMsg.class, this::onStop)
-                .onMessage(RequestBody.class, this::onRequestBody)
-                .onMessage(ResponseBody.class, this::onResponseBody)
                 .onMessage(UpdateBody.class, this::onUpdateBody)
                 .build();
     }
@@ -54,67 +48,46 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     }
 
     private void resetValues() {
-        this.numReceivedBodies = 0;
         this.totBodies = 0;
         this.dt = 0;
-        this.bodies = new HashMap<>();
-    }
-
-    private Behavior<BodyMsg> onResponseBody(final ResponseBody msg) {
-        this.bodies.put(msg.getBodyActorRef(), msg.getBody());
-        this.numReceivedBodies++;
-
-        if (numReceivedBodies == totBodies - 1) {
-            List<Body> bodyList = this.bodies.values().stream().toList();
-            for (final Body b : bodyList) {
-                /* compute total force on bodies */
-                V2d totalForce = computeTotalForceOnBody(b);
-
-                /* compute instant acceleration */
-                V2d acc = new V2d(totalForce).scalarMul(1.0 / b.getMass());
-
-                /* update velocity */
-                b.updateVelocity(acc, this.dt);
-            }
-
-            /* compute bodies new pos */
-            for (Body b : bodyList) {
-                b.updatePos(this.dt);
-            }
-
-            /* check collisions with boundaries */
-            for (Body b : bodyList) {
-                b.checkAndSolveBoundaryCollision(this.bounds);
-            }
-
-            int index = 0;
-            for (Map.Entry<ActorRef<BodyMsg>, Body> entry : this.bodies.entrySet()) {
-                this.bodies.put(entry.getKey(), bodyList.get(index));
-                index++;
-            }
-            this.bodies.forEach((key, value) -> key.tell(new UpdateBody(value)));
-
-            this.replyTo.tell(new UpdatedPositionsMsg(this.bodies.values().stream().toList()));
-
-            resetValues();
-        }
-
-        return this;
-    }
-
-    private Behavior<BodyMsg> onRequestBody(final RequestBody msg) {
-        msg.getReplyTo().tell(new ResponseBody(this.body, getContext().getSelf()));
-        return this;
     }
 
     /* calcolo dei nuovi valori di velocità e posizione per ogni Body */
     private Behavior<BodyMsg> onNewIteration(final ComputePositionsMsg msg) {
-        //this.getContext().getLog().info("BodyActor: position's computation message received from ControllerActor.");
-        this.totBodies = msg.getBodyRefsList().size();
+        Map<Integer, Body> indexBodyMap = new HashMap<>();
+
+        this.totBodies = msg.getBodyList().size();
         this.dt = msg.getDt();
         this.bounds = msg.getBounds();
         this.replyTo = msg.getReplyTo();
-        msg.getBodyRefsList().stream().filter(ref -> !ref.equals(getContext().getSelf())).forEach(body -> body.tell(new RequestBody(getContext().getSelf())));
+
+        List<Body> bodyList = msg.getBodyList();
+        for (final Body b : bodyList) {
+            /* compute total force on bodies */
+            V2d totalForce = computeTotalForceOnBody(bodyList, b);
+
+            /* compute instant acceleration */
+            V2d acc = new V2d(totalForce).scalarMul(1.0 / b.getMass());
+
+            /* update velocity */
+            b.updateVelocity(acc, this.dt);
+        }
+
+        /* compute bodies new pos */
+        for (Body b : bodyList) {
+            b.updatePos(this.dt);
+        }
+
+        /* check collisions with boundaries */
+        for (Body b : bodyList) {
+            b.checkAndSolveBoundaryCollision(this.bounds);
+            indexBodyMap.put(bodyList.indexOf(b), b);
+        }
+
+        this.replyTo.tell(new UpdatedPositionsMsg(indexBodyMap));
+
+        resetValues();
+
         return this;
     }
 
@@ -129,17 +102,17 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         return Behaviors.setup(context -> new BodyActor(context, b));
     }
 
-    private V2d computeTotalForceOnBody(final Body b) {
+    private V2d computeTotalForceOnBody(final List<Body> bodies, final Body b) {
         V2d totalForce = new V2d(0, 0);
 
         /* compute total repulsive force */
-        for (Body otherBody : this.bodies.values()) {
+        for (Body otherBody : bodies) {
             if (!b.equals(otherBody)) {
                 try {
                     V2d forceByOtherBody = b.computeRepulsiveForceBy(otherBody);
                     totalForce.sum(forceByOtherBody);
                 } catch (Exception ex) {
-                    System.out.println("Error in force calculation of the body n." + bodies.values().stream().toList().indexOf(otherBody));
+                    System.out.println("Error in force calculation of the body n." + bodies.indexOf(otherBody));
                     ex.printStackTrace();
                 }
             }

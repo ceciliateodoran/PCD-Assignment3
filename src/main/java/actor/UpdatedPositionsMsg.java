@@ -4,6 +4,7 @@ import actor.utils.Body;
 import actor.utils.Boundary;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * messaggio con i nuovi valori dei Bodies calcolati
@@ -11,8 +12,8 @@ import java.util.List;
  * e dal ControllerActor al ViewActor
  */
 public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
+    private Map<Integer, Body> indexBodyMap;
     private List<Body> bodies;
-
     private double vt;
 
     private int iter;
@@ -20,8 +21,8 @@ public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
     private Boundary bounds;
 
     /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ControllerActor */
-    public UpdatedPositionsMsg(final List<Body> allBodies) {
-        this.bodies = allBodies;
+    public UpdatedPositionsMsg(final Map<Integer, Body> bodyMap) {
+        this.indexBodyMap = bodyMap;
     }
 
     /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ViewActor */
@@ -33,8 +34,12 @@ public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
         this.bounds = bounds;
     }
 
-    public List<Body> getBodies(){
-        return this.bodies;
+    public Map<Integer, Body> getIndexBodyMap() {
+        return this.indexBodyMap;
+    }
+
+    public List<Body> getBodies() {
+        return bodies;
     }
 
     public double getVt() {

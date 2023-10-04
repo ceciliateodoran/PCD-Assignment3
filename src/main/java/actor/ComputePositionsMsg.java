@@ -1,5 +1,6 @@
 package actor;
 
+import actor.utils.Body;
 import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
 
@@ -12,16 +13,16 @@ import java.util.List;
 public class ComputePositionsMsg implements BodyMsg {
 
     private ActorRef<ControllerMsg> replyTo;
-    private List<ActorRef<BodyMsg>> bodyRefsList;
+    private List<Body> bodyList;
     private Boundary bounds;
 
     /* virtual time step */
     private final double dt;
 
-    public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt, final List<ActorRef<BodyMsg>> refsList, final Boundary bounds) {
+    public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt, final List<Body> bodyList, final Boundary bounds) {
         this.replyTo = replyTo;
         this.dt = dt;
-        this.bodyRefsList = refsList;
+        this.bodyList = bodyList;
         this.bounds = bounds;
     }
 
@@ -33,8 +34,8 @@ public class ComputePositionsMsg implements BodyMsg {
         return this.dt;
     }
 
-    public List<ActorRef<BodyMsg>> getBodyRefsList() {
-        return bodyRefsList;
+    public List<Body> getBodyList() {
+        return bodyList;
     }
 
     public Boundary getBounds() {
