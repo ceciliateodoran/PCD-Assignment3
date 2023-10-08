@@ -1,9 +1,12 @@
-package actor;
+package actor.message;
 
+import actor.message.BodyMsg;
+import actor.message.ControllerMsg;
 import actor.utils.Body;
 import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +25,7 @@ public class ComputePositionsMsg implements BodyMsg {
     public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt, final List<Body> bodyList, final Boundary bounds) {
         this.replyTo = replyTo;
         this.dt = dt;
-        this.bodyList = bodyList;
+        this.bodyList = new ArrayList<>(bodyList);
         this.bounds = bounds;
     }
 

@@ -1,4 +1,4 @@
-package actor;
+package actor.message;
 
 /**
  * messaggi che può ricevere il ViewActor

@@ -1,5 +1,6 @@
 package actor;
 
+import actor.message.*;
 import actor.utils.Body;
 import actor.utils.Boundary;
 import actor.utils.V2d;
@@ -9,20 +10,17 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import distributed.messages.spawn.Stop;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
  * attore che si occupa di calcolare i nuovi valori di velocità e posizione di ogni Body
  */
 public class BodyActor extends AbstractBehavior<BodyMsg> {
-    private Body body;
-    private int totBodies;
+    private final Body body;
+    private static final double DISTANCE_FROM_BODY = 0.2;
 
     private double dt;
     private Boundary bounds;
@@ -31,71 +29,44 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     private BodyActor(final ActorContext<BodyMsg> context, final Body b) {
         super(context);
         this.body = b;
-        this.totBodies = 0;
     }
 
     @Override
     public Receive<BodyMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(ComputePositionsMsg.class, this::onNewIteration)
-                .onMessage(StopMsg.class, this::onStop)
-                .onMessage(UpdateBody.class, this::onUpdateBody)
+                .onMessage(ComputePositionsMsg.class, this::onComputationRequest)
+                .onMessage(StopActor.class, this::onStop)
                 .build();
     }
 
-    private Behavior<BodyMsg> onUpdateBody(final UpdateBody msg) {
-        this.body = msg.getBody();
-        return this;
-    }
-
-    private void resetValues() {
-        this.totBodies = 0;
-        this.dt = 0;
+    private Behavior<BodyMsg> onStop(StopActor msg) {
+        return Behaviors.stopped();
     }
 
     /* calcolo dei nuovi valori di velocità e posizione per ogni Body */
-    private Behavior<BodyMsg> onNewIteration(final ComputePositionsMsg msg) {
-        Map<Integer, Body> indexBodyMap = new HashMap<>();
+    private Behavior<BodyMsg> onComputationRequest(final ComputePositionsMsg msg) {
 
-        this.totBodies = msg.getBodyList().size();
-        this.dt = msg.getDt();
-        this.bounds = msg.getBounds();
-        this.replyTo = msg.getReplyTo();
+        /* compute total force on bodies */
+        V2d totalForce = computeTotalForceOnBody(msg.getBodyList().stream()
+                .filter(body -> Math.abs(body.getPos().getX() - this.body.getPos().getX()) < 0.2 &&
+                        Math.abs(body.getPos().getY() - this.body.getPos().getY()) < 0.2 &&
+                        body.getDistanceFrom(this.body) <= DISTANCE_FROM_BODY).collect(Collectors.toList()), this.body);
 
-        List<Body> bodyList = msg.getBodyList();
-        for (final Body b : bodyList) {
-            /* compute total force on bodies */
-            V2d totalForce = computeTotalForceOnBody(bodyList, b);
+        /* compute instant acceleration */
+        V2d acc = new V2d(totalForce).scalarMul(1.0 / this.body.getMass());
 
-            /* compute instant acceleration */
-            V2d acc = new V2d(totalForce).scalarMul(1.0 / b.getMass());
-
-            /* update velocity */
-            b.updateVelocity(acc, this.dt);
-        }
+        /* update velocity */
+        this.body.updateVelocity(acc, msg.getDt());
 
         /* compute bodies new pos */
-        for (Body b : bodyList) {
-            b.updatePos(this.dt);
-        }
+        this.body.updatePos(msg.getDt());
 
         /* check collisions with boundaries */
-        for (Body b : bodyList) {
-            b.checkAndSolveBoundaryCollision(this.bounds);
-            indexBodyMap.put(bodyList.indexOf(b), b);
-        }
+        this.body.checkAndSolveBoundaryCollision(msg.getBounds());
 
-        this.replyTo.tell(new UpdatedPositionsMsg(indexBodyMap));
-
-        resetValues();
+        msg.getReplyTo().tell(new BodyComputationResult(this.body));
 
         return this;
-    }
-
-    /* reset dei bodies con nuovi valori (per un eventuale re-start) */
-    private Behavior<BodyMsg> onStop(final StopMsg msg) {
-        //this.getContext().getLog().info("BodyActor: iterations stop message received from ControllerActor.");
-        return Behaviors.stopped();
     }
 
     /* public factory to create Body actor */

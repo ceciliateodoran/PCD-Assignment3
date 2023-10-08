@@ -1,5 +1,6 @@
 package actor;
 
+import actor.message.*;
 import actor.view.SimulationView;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -21,7 +22,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     private static ActorRef<ControllerMsg> controllerActorRef;
 
-    private SimulationView viewer;
+    private final SimulationView viewer;
 
     private ViewActor(final ActorContext<ViewMsg> context) {
         super(context);
@@ -52,7 +53,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
         if (state) {
             this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
-            controllerActorRef.tell(new ViewUpdatedMsg());
+            controllerActorRef.tell(new IterationCompleted());
         }
         return this;
     }

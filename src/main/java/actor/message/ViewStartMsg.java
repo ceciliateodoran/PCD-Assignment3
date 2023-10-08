@@ -1,4 +1,4 @@
-package actor;
+package actor.message;
 
 /**
  * messaggio che invia il ViewActor al ControllerActor
