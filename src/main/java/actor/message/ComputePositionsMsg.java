@@ -15,11 +15,9 @@ import java.util.List;
  */
 public class ComputePositionsMsg implements BodyMsg {
 
-    private ActorRef<ControllerMsg> replyTo;
-    private List<Body> bodyList;
-    private Boundary bounds;
-
-    /* virtual time step */
+    private final ActorRef<ControllerMsg> replyTo;
+    private final List<Body> bodyList;
+    private final Boundary bounds;
     private final double dt;
 
     public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt, final List<Body> bodyList, final Boundary bounds) {

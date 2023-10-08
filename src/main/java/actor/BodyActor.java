@@ -4,13 +4,13 @@ import actor.message.*;
 import actor.utils.Body;
 import actor.utils.Boundary;
 import actor.utils.V2d;
+
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import distributed.messages.spawn.Stop;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,10 +21,6 @@ import java.util.stream.Collectors;
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private final Body body;
     private static final double DISTANCE_FROM_BODY = 0.2;
-
-    private double dt;
-    private Boundary bounds;
-    private ActorRef<ControllerMsg> replyTo;
 
     private BodyActor(final ActorContext<BodyMsg> context, final Body b) {
         super(context);
@@ -37,6 +33,11 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
                 .onMessage(ComputePositionsMsg.class, this::onComputationRequest)
                 .onMessage(StopActor.class, this::onStop)
                 .build();
+    }
+
+    /* public factory to create Body actor */
+    public static Behavior<BodyMsg> create(final Body b) {
+        return Behaviors.setup(context -> new BodyActor(context, b));
     }
 
     private Behavior<BodyMsg> onStop(StopActor msg) {
@@ -65,13 +66,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         this.body.checkAndSolveBoundaryCollision(msg.getBounds());
 
         msg.getReplyTo().tell(new BodyComputationResult(this.body));
-
         return this;
-    }
-
-    /* public factory to create Body actor */
-    public static Behavior<BodyMsg> create(final Body b) {
-        return Behaviors.setup(context -> new BodyActor(context, b));
     }
 
     private V2d computeTotalForceOnBody(final List<Body> bodies, final Body b) {
@@ -89,10 +84,8 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
                 }
             }
         }
-
         /* add friction force */
         totalForce.sum(b.getCurrentFrictionForce());
-
         return totalForce;
     }
 }

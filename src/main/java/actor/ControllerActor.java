@@ -20,18 +20,11 @@ import java.util.*;
  */
 public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private static int totBodies;
-
     private static int maxIter;
-
     private static int viewHeight;
-
     private static int viewWidth;
-
     private int currentIter;
-
     private double vt;
-
-    /* virtual time step */
     private final double dt;
     private List<ActorRef<BodyMsg>> bodyActorRefList;
     private final ActorRef<ViewMsg> viewActorRef;
@@ -74,7 +67,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     private Behavior<ControllerMsg> onIterationCompleted(IterationCompleted msg) {
-
         this.currentIter++;
         this.vt += this.dt;
         if(this.currentIter <= maxIter) {

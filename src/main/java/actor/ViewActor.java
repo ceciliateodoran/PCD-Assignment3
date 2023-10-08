@@ -15,13 +15,9 @@ import akka.actor.typed.javadsl.Receive;
 public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     private static int height;
-
     private static int width;
-
     private boolean state;
-
     private static ActorRef<ControllerMsg> controllerActorRef;
-
     private final SimulationView viewer;
 
     private ViewActor(final ActorContext<ViewMsg> context) {
@@ -39,6 +35,14 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
                 .onMessage(UpdatedPositionsMsg.class, this::onNewBodies)
                 .onMessage(ControllerStopMsg.class, this::onEndIterations)
                 .build();
+    }
+
+    /* public factory to create the View actor */
+    public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
+        controllerActorRef = actorRef;
+        width = w;
+        height = h;
+        return Behaviors.setup(ViewActor::new);
     }
 
     /* aggiornamento GUI al termine delle iterazioni */
@@ -72,13 +76,5 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         controllerActorRef.tell(msg);
         this.state = false;
         return this;
-    }
-
-    /* public factory to create the View actor */
-    public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
-        controllerActorRef = actorRef;
-        width = w;
-        height = h;
-        return Behaviors.setup(ViewActor::new);
     }
 }
