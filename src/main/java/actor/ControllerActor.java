@@ -1,15 +1,21 @@
 package actor;
 
 import actor.message.*;
+import actor.message.test.DistributedTestResult;
+import actor.message.test.FakeIterationCompleted;
+import actor.message.test.FakeUpdatePositionMsg;
+import actor.message.test.StartTest;
 import actor.utils.Body;
 import actor.utils.BodyGenerator;
 import actor.utils.Boundary;
+import actor.utils.TestActor;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import distributed.messages.ValueMsg;
 
 import java.util.*;
 
@@ -41,15 +47,6 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
     }
 
-    /**
-     * Construct a new instance of the View actor and GUI
-     *
-     * @param bodies The number of total bodies
-     * @param iter The number of total iterations
-     * @param h The height of the user interface
-     * @param w The width of the user interface
-     * @return The newly created instance of the Controller actor
-     */
     private ControllerActor(final ActorContext<ControllerMsg> context, final boolean test) {
         super(context);
         this.dt = 0.001;
@@ -60,8 +57,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     @Override
     public Receive<ControllerMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(BodyComputationResult.class, this::onBodyReceived)
-                .onMessage(IterationCompleted.class, this::onIterationCompleted)
+                .onMessage(BodyComputationResultMsg.class, this::onBodyReceived)
+                .onMessage(IterationCompletedMsg.class, this::onIterationCompleted)
                 .onMessage(ViewStartMsg.class, this::onViewStart)
                 .onMessage(ViewStopMsg.class, this::onStop)
                 .onMessage(StartTest.class, this::onStartTest)
@@ -69,7 +66,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
                 .build();
     }
 
-    /* public factory to create the Controller actor */
+    /**
+     * Construct a new instance of the Controller actor
+     *
+     * @param bodies The number of total bodies
+     * @param iter The number of total iterations
+     * @param h The height of the user interface
+     * @param w The width of the user interface
+     * @return The newly created instance of the Controller actor
+     */
     public static Behavior<ControllerMsg> create(final int bodies, final int iter, final int w, final int h) {
         totBodies = bodies;
         maxIter = iter;
@@ -78,7 +83,16 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return Behaviors.setup(ControllerActor::new);
     }
 
-    /* public factory to create the Controller actor in test mode */
+    /**
+     * Construct a new instance of the Controller actor with test mode
+     *
+     * @param bodies The number of total bodies
+     * @param iter The number of total iterations
+     * @param h The height of the user interface
+     * @param w The width of the user interface
+     * @param test The flag activating the test behavior
+     * @return The newly created instance of the Controller actor
+     */
     public static Behavior<ControllerMsg> create(final int bodies, final int iter, final int w, final int h, final boolean test) {
         totBodies = bodies;
         maxIter = iter;
@@ -88,7 +102,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     //message sent by BodyActor when the new velocity and position values of the Bodies have been computed
-    private Behavior<ControllerMsg> onBodyReceived(BodyComputationResult msg) {
+    private Behavior<ControllerMsg> onBodyReceived(BodyComputationResultMsg msg) {
         this.bodies.add(msg.getBody());
         if(this.bodies.size() == this.bodyActorRefList.size() && !this.testMode){
             this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
