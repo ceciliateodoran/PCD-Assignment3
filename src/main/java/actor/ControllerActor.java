@@ -69,13 +69,12 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private Behavior<ControllerMsg> onIterationCompleted(IterationCompleted msg) {
         this.currentIter++;
         this.vt += this.dt;
-        if(this.currentIter <= maxIter) {
+        if(this.currentIter < maxIter) {
             ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
             this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
             this.bodies.clear();
         } else {
             this.viewActorRef.tell(new ControllerStopMsg());
-            getContext().getSelf().tell(new ViewStopMsg());
         }
         return this;
     }
