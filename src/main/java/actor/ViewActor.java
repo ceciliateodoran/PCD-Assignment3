@@ -16,7 +16,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     private static int height;
     private static int width;
-    private boolean state;
+    private boolean isRunning;
     private static ActorRef<ControllerMsg> controllerActorRef;
     private final SimulationView viewer;
 
@@ -24,7 +24,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         super(context);
         this.viewer = new SimulationView(width,height, context.getSelf());
         this.viewer.display();
-        this.state = false;
+        this.isRunning = false;
     }
 
     @Override
@@ -49,13 +49,13 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
         this.viewer.updateState("Stopped");
         controllerActorRef.tell(new ViewStopMsg());
-        this.state = false;
+        this.isRunning = false;
         return this;
     }
 
     /* aggiornamento dei Bodies nella GUI */
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
-        if (state) {
+        if (isRunning) {
             this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
             controllerActorRef.tell(new IterationCompleted());
         }
@@ -66,7 +66,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
         //this.getContext().getLog().info("ViewActor: received start event from GUI.");
         controllerActorRef.tell(msg);
-        this.state = true;
+        this.isRunning = true;
         return this;
     }
 
@@ -74,7 +74,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     private Behavior<ViewMsg> onStop(final ViewStopMsg msg) {
         //this.getContext().getLog().info("ViewActor: received stop event from GUI.");
         controllerActorRef.tell(msg);
-        this.state = false;
+        this.isRunning = false;
         return this;
     }
 }
