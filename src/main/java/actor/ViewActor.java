@@ -1,6 +1,7 @@
 package actor;
 
 import actor.message.*;
+import actor.utils.Body;
 import actor.view.SimulationView;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -8,6 +9,10 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Represent the View actor implementation
@@ -19,12 +24,14 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     private boolean isRunning;
     private static ActorRef<ControllerMsg> controllerActorRef;
     private final SimulationView view;
+    private final LinkedList<UpdatedPositionsMsg> toDraw;
 
     private ViewActor(final ActorContext<ViewMsg> context) {
         super(context);
         this.view = new SimulationView(width,height, context.getSelf());
         this.view.display();
         this.isRunning = false;
+        this.toDraw = new LinkedList<>();
     }
 
     /**
@@ -48,6 +55,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
                 .onMessage(ViewStopMsg.class, this::onStop)
                 .onMessage(UpdatedPositionsMsg.class, this::onNewBodies)
                 .onMessage(ControllerStopMsg.class, this::onEndIterations)
+                .onMessage(DrawMsg.class, this::onDraw)
                 .build();
     }
 
@@ -62,9 +70,16 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     //update Bodies in GUI during the simulation
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
         if (isRunning) {
-            this.view.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
+            this.toDraw.addLast(msg);
+            this.getContext().getSelf().tell(new DrawMsg());
             controllerActorRef.tell(new IterationCompleted());
         }
+        return this;
+    }
+
+    private Behavior<ViewMsg> onDraw(final DrawMsg msg) {
+        UpdatedPositionsMsg toDraw = this.toDraw.remove();
+        this.view.updateView(toDraw.getBodies(), toDraw.getVt(), toDraw.getIter(), toDraw.getBounds());
         return this;
     }
 
