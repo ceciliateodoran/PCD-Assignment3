@@ -1,8 +1,8 @@
 package actor.message;
 
 /**
- * messaggio che invia il ViewActor al ControllerActor
- * quando viene premuto Start per far iniziare le iterazioni
+ * Message from ViewActor to ControllerActor
+ * when Start button is pressed to start the simulation
  */
 public class ViewStartMsg implements ViewMsg, ControllerMsg {
 }

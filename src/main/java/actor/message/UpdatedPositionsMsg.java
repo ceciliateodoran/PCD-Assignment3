@@ -7,9 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * messaggio con i nuovi valori dei Bodies calcolati
- * inviato dal BodyActor al ControllerActor
- * e dal ControllerActor al ViewActor
+ * Message from ControllerActor to ViewActor
+ * with the new values computed for each Body and the simulation environment
  */
 public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
     private final List<Body> bodies;
@@ -17,7 +16,6 @@ public class UpdatedPositionsMsg implements ControllerMsg, ViewMsg {
     private final int iter;
     private final Boundary bounds;
 
-    /* costruttore per l'invio dei nuovi valori dei Bodies calcolati al ViewActor */
     public UpdatedPositionsMsg(final List<Body> allBodies, final double vt,
                                final int iter, final Boundary bounds) {
         this.bodies = new ArrayList<>(allBodies);

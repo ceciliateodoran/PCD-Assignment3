@@ -1,7 +1,7 @@
 package actor.message;
 
 /**
- * messaggi che può ricevere il BodyActor
+ * Generic message for BodyActor
  */
 public interface BodyMsg {
 
