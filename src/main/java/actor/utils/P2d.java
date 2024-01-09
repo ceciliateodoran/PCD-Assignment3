@@ -1,5 +1,10 @@
 package actor.utils;
 
+/**
+ *
+ * 2-dimensional point
+ *
+ */
 public class P2d {
 
     private double x, y;

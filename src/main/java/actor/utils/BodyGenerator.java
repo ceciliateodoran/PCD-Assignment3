@@ -5,9 +5,13 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Random;
 
+/**
+ * Generator of all Bodies inside given boundaries
+ *
+ */
 public class BodyGenerator {
 	
-	public ArrayList<Body> generateBodies(int nBodies, Boundary bounds) {
+	public ArrayList<Body> generateBodies(final int nBodies, final Boundary bounds) {
 		ArrayList<Body> bodies = new ArrayList<>();
 		Random rand = new Random(System.currentTimeMillis());
 		bodies = new ArrayList<Body>();
@@ -20,7 +24,7 @@ public class BodyGenerator {
 		return bodies;
 	}
 	
-	public static double round(double value, int places) {
+	public static double round(final double value, final int places) {
 	    if (places < 0) throw new IllegalArgumentException();
 	    return new BigDecimal(value).setScale(places, RoundingMode.HALF_UP).doubleValue();
 	}
