@@ -1,7 +1,5 @@
 package actor.message;
 
-import actor.message.BodyMsg;
-import actor.message.ControllerMsg;
 import actor.utils.Body;
 import actor.utils.Boundary;
 import akka.actor.typed.ActorRef;
@@ -10,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * messaggio che invia il ControllerActor al BodyActor
- * per far iniziare il nuovo calcolo di velocità e posizione
+ * Message from ControllerActor to BodyActor
+ * to start the computation of new velocity and position values
  */
 public class ComputePositionsMsg implements BodyMsg {
 

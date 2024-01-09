@@ -2,6 +2,9 @@ package actor.message;
 
 import actor.utils.Body;
 
+/**
+ * Message from BodyActor to ControllerActor with the new Body
+ */
 public class BodyComputationResult implements ControllerMsg {
     private final Body b;
 

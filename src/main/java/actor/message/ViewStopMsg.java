@@ -1,8 +1,8 @@
 package actor.message;
 
 /**
- * messaggio che invia il ViewActor al ControllerActor
- * quando viene premuto Stop per far terminare le iterazioni
+ * Message from ViewActor to ControllerActor
+ * when Stop button is pressed to stop the simulation
  */
 public class ViewStopMsg implements ViewMsg, ControllerMsg {
 }
