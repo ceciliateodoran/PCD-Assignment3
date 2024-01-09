@@ -69,7 +69,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private Behavior<ControllerMsg> onIterationCompleted(IterationCompleted msg) {
         this.currentIter++;
         this.vt += this.dt;
-        if(this.currentIter < maxIter) {
+        if(this.currentIter <= maxIter) {
             ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
             this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
             this.bodies.clear();
@@ -97,7 +97,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private void initializeBodies() {
         BodyGenerator bg = new BodyGenerator();
-        this.currentIter = 0;
+        this.currentIter = 1;
         this.vt = 0;
         this.bodyActorRefList = new ArrayList<>();
         this.bodies = new ArrayList<>();
