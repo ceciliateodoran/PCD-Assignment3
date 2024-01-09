@@ -2,10 +2,8 @@ package actor;
 
 import actor.message.*;
 import actor.utils.Body;
-import actor.utils.Boundary;
 import actor.utils.V2d;
 
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -16,35 +14,42 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * attore che si occupa di calcolare i nuovi valori di velocità e posizione di ogni Body
+ * Represent the Body actor implementation,
+ * Compute the new velocity and position values
  */
 public class BodyActor extends AbstractBehavior<BodyMsg> {
-    private final Body body;
     private static final double DISTANCE_FROM_BODY = 0.2;
+    private final Body body;
 
     private BodyActor(final ActorContext<BodyMsg> context, final Body b) {
         super(context);
         this.body = b;
     }
 
-    @Override
-    public Receive<BodyMsg> createReceive() {
-        return newReceiveBuilder()
-                .onMessage(ComputePositionsMsg.class, this::onComputationRequest)
-                .onMessage(StopActor.class, this::onStop)
-                .build();
-    }
-
-    /* public factory to create Body actor */
+    /**
+     * Construct a new instance of the Body actor
+     *
+     * @param b The body
+     * @return The newly created instance of the Body actor
+     */
     public static Behavior<BodyMsg> create(final Body b) {
         return Behaviors.setup(context -> new BodyActor(context, b));
     }
 
-    private Behavior<BodyMsg> onStop(StopActor msg) {
+    @Override
+    public Receive<BodyMsg> createReceive() {
+        return newReceiveBuilder()
+                .onMessage(ComputePositionsMsg.class, this::onComputationRequest)
+                .onMessage(StopActorMsg.class, this::onStop)
+                .build();
+    }
+
+    //termination of the actor
+    private Behavior<BodyMsg> onStop(final StopActorMsg msg) {
         return Behaviors.stopped();
     }
 
-    /* calcolo dei nuovi valori di velocità e posizione per ogni Body */
+    //computation of the new velocity and position values for each Body
     private Behavior<BodyMsg> onComputationRequest(final ComputePositionsMsg msg) {
 
         /* compute total force on bodies */
@@ -65,14 +70,14 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         /* check collisions with boundaries */
         this.body.checkAndSolveBoundaryCollision(msg.getBounds());
 
-        msg.getReplyTo().tell(new BodyComputationResult(this.body));
+        msg.getReplyTo().tell(new BodyComputationResultMsg(this.body));
         return this;
     }
 
     private V2d computeTotalForceOnBody(final List<Body> bodies, final Body b) {
         V2d totalForce = new V2d(0, 0);
 
-        /* compute total repulsive force */
+        // compute total repulsive force
         for (Body otherBody : bodies) {
             if (!b.equals(otherBody)) {
                 try {
@@ -84,7 +89,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
                 }
             }
         }
-        /* add friction force */
+        // add friction force
         totalForce.sum(b.getCurrentFrictionForce());
         return totalForce;
     }

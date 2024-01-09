@@ -1,6 +1,8 @@
 package actor.message;
+
 /**
- * messaggio che invia il ControllerActor al ViewActor per avvisare che le interazioni sono terminate
+ * Message from ControllerActor to ViewActor
+ * to stop the simulation at the end of all iterations
  */
 public class ControllerStopMsg implements ViewMsg {
 }

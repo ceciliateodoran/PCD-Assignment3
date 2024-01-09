@@ -9,22 +9,40 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
+import java.util.LinkedList;
+
 /**
- * attore che si occupa di far visualizzare i valori dei Bodies
+ * Represent the View actor implementation
  */
 public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     private static int height;
     private static int width;
-    private boolean state;
+    private boolean isRunning;
     private static ActorRef<ControllerMsg> controllerActorRef;
-    private final SimulationView viewer;
+    private final SimulationView view;
+    private final LinkedList<UpdatedPositionsMsg> toDraw;
 
     private ViewActor(final ActorContext<ViewMsg> context) {
         super(context);
-        this.viewer = new SimulationView(width,height, context.getSelf());
-        this.viewer.display();
-        this.state = false;
+        this.view = new SimulationView(width,height, context.getSelf());
+        this.view.display();
+        this.isRunning = false;
+        this.toDraw = new LinkedList<>();
+    }
+
+    /**
+     * Construct a new instance of the View actor and GUI
+     *
+     * @param h The height of the user interface
+     * @param w The width of the user interface
+     * @return The newly created instance of the View actor
+     */
+    public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
+        controllerActorRef = actorRef;
+        width = w;
+        height = h;
+        return Behaviors.setup(ViewActor::new);
     }
 
     @Override
@@ -34,47 +52,48 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
                 .onMessage(ViewStopMsg.class, this::onStop)
                 .onMessage(UpdatedPositionsMsg.class, this::onNewBodies)
                 .onMessage(ControllerStopMsg.class, this::onEndIterations)
+                .onMessage(DrawMsg.class, this::onDraw)
                 .build();
     }
 
-    /* public factory to create the View actor */
-    public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
-        controllerActorRef = actorRef;
-        width = w;
-        height = h;
-        return Behaviors.setup(ViewActor::new);
-    }
-
-    /* aggiornamento GUI al termine delle iterazioni */
-    private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
-        this.viewer.updateState("Stopped");
+    //GUI update at the end of iterations
+    private Behavior<ViewMsg> onEndIterations(final ControllerStopMsg msg) {
+        this.view.updateState("Stopped");
         controllerActorRef.tell(new ViewStopMsg());
-        this.state = false;
+        this.isRunning = false;
         return this;
     }
 
-    /* aggiornamento dei Bodies nella GUI */
+    //add the newly calculated values to the list of items to be drawn
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
-        if (state) {
-            this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
-            controllerActorRef.tell(new IterationCompleted());
+        if (isRunning) {
+            this.toDraw.addLast(msg);
+            this.getContext().getSelf().tell(new DrawMsg());
+            controllerActorRef.tell(new IterationCompletedMsg());
         }
         return this;
     }
 
-    /* gestione dell'evento Start */
-    private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
-        //this.getContext().getLog().info("ViewActor: received start event from GUI.");
-        controllerActorRef.tell(msg);
-        this.state = true;
+    //draw a new iteration of Bodies and simulation environment in GUI
+    private Behavior<ViewMsg> onDraw(final DrawMsg msg) {
+        UpdatedPositionsMsg toDraw = this.toDraw.remove();
+        this.view.updateView(toDraw.getBodies(), toDraw.getVt(), toDraw.getIter(), toDraw.getBounds());
         return this;
     }
 
-    /* gestione dell'evento Stop */
+    //management of Start event
+    private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
+        //this.getContext().getLog().info("ViewActor: received start event from GUI.");
+        controllerActorRef.tell(msg);
+        this.isRunning = true;
+        return this;
+    }
+
+    //management of Stop event
     private Behavior<ViewMsg> onStop(final ViewStopMsg msg) {
         //this.getContext().getLog().info("ViewActor: received stop event from GUI.");
         controllerActorRef.tell(msg);
-        this.state = false;
+        this.isRunning = false;
         return this;
     }
 }

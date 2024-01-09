@@ -1,20 +1,19 @@
 package actor.utils;
 
-/*
- * This class represents a body
+/**
+ * Represent a body
  * 
  */
 public class Body {
     
 	private static final double REPULSIVE_CONST = 0.01;
 	private static final double FRICTION_CONST = 1;
-	
     private P2d pos;
     private V2d vel;
     private double mass;
     private int id;
     
-    public Body(int id, P2d pos, V2d vel, double mass){
+    public Body(final int id, final P2d pos, final V2d vel, final double mass){
     	this.id = id;
         this.pos = pos;
         this.vel = vel;
@@ -37,7 +36,7 @@ public class Body {
     	return id;
     }
     
-    public boolean equals(Object b) {
+    public boolean equals(final Object b) {
     	return ((Body)b).id == id;
     }
     
@@ -47,7 +46,7 @@ public class Body {
      * 
      * @param dt time elapsed 
      */
-    public void updatePos(double dt){
+    public void updatePos(final double dt){
     	pos.sum(new V2d(vel).scalarMul(dt));
     }
 
@@ -56,7 +55,7 @@ public class Body {
      * @param acc instant acceleration
      * @param dt time elapsed
      */
-    public void updateVelocity(V2d acc, double dt){    	
+    public void updateVelocity(final V2d acc, final double dt){
     	vel.sum(new V2d(acc).scalarMul(dt));
     }
     
@@ -66,7 +65,7 @@ public class Body {
      * @param vx
      * @param vy
      */
-    public void changeVel(double vx, double vy){
+    public void changeVel(final double vx, final double vy){
     	vel.change(vx, vy);
     }
   	
@@ -76,7 +75,7 @@ public class Body {
      * @param b
      * @return
      */
-    public double getDistanceFrom(Body b) {
+    public double getDistanceFrom(final Body b) {
     	double dx = pos.getX() - b.getPos().getX();
     	double dy = pos.getY() - b.getPos().getY();
     	return Math.sqrt(dx*dx + dy*dy);
@@ -90,7 +89,7 @@ public class Body {
      * @return
      * @throws InfiniteForceException
      */
-    public V2d computeRepulsiveForceBy(Body b) throws InfiniteForceException {
+    public V2d computeRepulsiveForceBy(final Body b) throws InfiniteForceException {
 		double dist = getDistanceFrom(b);
 		if (dist > 0) {
 			try {
@@ -119,7 +118,7 @@ public class Body {
      * 
      * @param bounds
      */
-    public void checkAndSolveBoundaryCollision(Boundary bounds){
+    public void checkAndSolveBoundaryCollision(final Boundary bounds){
     	double x = pos.getX();
     	double y = pos.getY();    	
         

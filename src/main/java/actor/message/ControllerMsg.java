@@ -1,7 +1,7 @@
 package actor.message;
 
 /**
- * messaggi che può ricevere il ControllerActor
+ * Generic message for ControllerActor
  */
 public interface ControllerMsg {
 

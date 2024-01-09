@@ -11,22 +11,18 @@ import java.awt.event.KeyListener;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
+/**
+ * Creator of the GUI elements during the simulation
+ */
 public class VisualizerPanel extends JPanel implements KeyListener {
     
 	private static final long serialVersionUID = 1L;
-
 	private List<Body> bodies;
-
 	private Boundary bounds;
-	
 	private long nIter;
-
 	private double vt;
-
 	private double scale = 1;
-	
     private long dx;
-
     private long dy;
     
     public VisualizerPanel(int w, int h){
@@ -48,7 +44,6 @@ public class VisualizerPanel extends JPanel implements KeyListener {
     		g2.setRenderingHint(RenderingHints.KEY_RENDERING,
     		          RenderingHints.VALUE_RENDER_QUALITY);
     		g2.clearRect(0,0,this.getWidth(),this.getHeight());
-
     		
     		int x0 = getXcoord(bounds.getX0());
     		int y0 = getYcoord(bounds.getY0());

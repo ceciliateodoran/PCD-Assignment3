@@ -1,28 +1,22 @@
 package actor;
 
 import actor.message.*;
-import actor.message.test.DistributedTestResult;
-import actor.message.test.FakeIterationCompleted;
-import actor.message.test.FakeUpdatePositionMsg;
-import actor.message.test.StartTest;
 import actor.utils.Body;
 import actor.utils.BodyGenerator;
 import actor.utils.Boundary;
-import actor.utils.TestActor;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import distributed.messages.ValueMsg;
 
 import java.util.*;
 
 /**
- * attore che crea BodyActor e ViewActor e che si occupa
- * sia di inviare i nuovi dati calcolati dal BodyActor al ViewActor,
- * sia di segnalare al BodyActor l'inizio e la terminazione del processo di calcolo
+ * Represent the Controller actor implementation,
+ * Create each BodyActor and the ViewActor,
+ * Intermediary actor between Bodies actors and the ViewActor
  */
 public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private static int totBodies;
@@ -47,6 +41,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
     }
 
+    /**
+     * Construct a new instance of the View actor and GUI
+     *
+     * @param bodies The number of total bodies
+     * @param iter The number of total iterations
+     * @param h The height of the user interface
+     * @param w The width of the user interface
+     * @return The newly created instance of the Controller actor
+     */
     private ControllerActor(final ActorContext<ControllerMsg> context, final boolean test) {
         super(context);
         this.dt = 0.001;
@@ -84,7 +87,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return Behaviors.setup((context) -> new ControllerActor(context, test));
     }
 
-    /* messaggio ricevuto dal BodyActor quando sono stati calcolati i nuovi valori di velocità e posizione dei Body */
+    //message sent by BodyActor when the new velocity and position values of the Bodies have been computed
     private Behavior<ControllerMsg> onBodyReceived(BodyComputationResult msg) {
         this.bodies.add(msg.getBody());
         if(this.bodies.size() == this.bodyActorRefList.size() && !this.testMode){
@@ -95,7 +98,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    private Behavior<ControllerMsg> onIterationCompleted(IterationCompleted msg) {
+    //message sent to the BodyActor at the end of each iteration and to the ViewActor when all iterations are completed
+    private Behavior<ControllerMsg> onIterationCompleted(final IterationCompletedMsg msg) {
         this.currentIter++;
         this.vt += this.dt;
         if(this.currentIter <= maxIter) {
@@ -106,7 +110,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Start */
+    //message sent by the ViewActor when the Start button press event is captured
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
         initializeBodies();
         ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
@@ -115,9 +119,9 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    /* messaggio ricevuto dal ViewActor quando viene catturato l'evento di pressione del bottone Stop */
+    //message sent by the ViewActor when the Stop button press event is captured or at the end of iterations
     private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
-        this.bodyActorRefList.forEach(actor -> actor.tell(new StopActor()));
+        this.bodyActorRefList.forEach(actor -> actor.tell(new StopActorMsg()));
         this.bodyActorRefList.clear();
         return this;
     }

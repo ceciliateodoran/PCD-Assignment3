@@ -1,7 +1,7 @@
 package actor.utils;
 
 /**
- * Boundary of the field where bodies move. 
+ * Boundary of the field where bodies move
  *
  */
 public class Boundary {
