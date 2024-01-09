@@ -1,7 +1,6 @@
 package actor;
 
 import actor.message.*;
-import actor.utils.Body;
 import actor.view.SimulationView;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -10,9 +9,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Represent the View actor implementation
@@ -60,23 +57,24 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     }
 
     //GUI update at the end of iterations
-    private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
+    private Behavior<ViewMsg> onEndIterations(final ControllerStopMsg msg) {
         this.view.updateState("Stopped");
         controllerActorRef.tell(new ViewStopMsg());
         this.isRunning = false;
         return this;
     }
 
-    //update Bodies in GUI during the simulation
+    //add the newly calculated values to the list of items to be drawn
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
         if (isRunning) {
             this.toDraw.addLast(msg);
             this.getContext().getSelf().tell(new DrawMsg());
-            controllerActorRef.tell(new IterationCompleted());
+            controllerActorRef.tell(new IterationCompletedMsg());
         }
         return this;
     }
 
+    //draw a new iteration of Bodies and simulation environment in GUI
     private Behavior<ViewMsg> onDraw(final DrawMsg msg) {
         UpdatedPositionsMsg toDraw = this.toDraw.remove();
         this.view.updateView(toDraw.getBodies(), toDraw.getVt(), toDraw.getIter(), toDraw.getBounds());

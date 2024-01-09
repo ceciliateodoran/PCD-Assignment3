@@ -58,15 +58,15 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     @Override
     public Receive<ControllerMsg> createReceive() {
         return newReceiveBuilder()
-                .onMessage(BodyComputationResult.class, this::onBodyReceived)
-                .onMessage(IterationCompleted.class, this::onIterationCompleted)
+                .onMessage(BodyComputationResultMsg.class, this::onBodyReceived)
+                .onMessage(IterationCompletedMsg.class, this::onIterationCompleted)
                 .onMessage(ViewStartMsg.class, this::onViewStart)
                 .onMessage(ViewStopMsg.class, this::onStop)
                 .build();
     }
 
     //message sent by BodyActor when the new velocity and position values of the Bodies have been computed
-    private Behavior<ControllerMsg> onBodyReceived(final BodyComputationResult msg) {
+    private Behavior<ControllerMsg> onBodyReceived(final BodyComputationResultMsg msg) {
         this.bodies.add(msg.getBody());
         if(this.bodies.size() == this.bodyActorRefList.size()){
             this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
@@ -75,7 +75,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     }
 
     //message sent to the BodyActor at the end of each iteration and to the ViewActor when all iterations are completed
-    private Behavior<ControllerMsg> onIterationCompleted(final IterationCompleted msg) {
+    private Behavior<ControllerMsg> onIterationCompleted(final IterationCompletedMsg msg) {
         this.currentIter++;
         this.vt += this.dt;
         if(this.currentIter <= maxIter) {
@@ -97,9 +97,9 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         return this;
     }
 
-    //message sent by the ViewActor when the Stop button press event is captured
+    //message sent by the ViewActor when the Stop button press event is captured or at the end of iterations
     private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
-        this.bodyActorRefList.forEach(actor -> actor.tell(new StopActor()));
+        this.bodyActorRefList.forEach(actor -> actor.tell(new StopActorMsg()));
         this.bodyActorRefList.clear();
         return this;
     }

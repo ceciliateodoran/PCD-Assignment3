@@ -2,10 +2,8 @@ package actor;
 
 import actor.message.*;
 import actor.utils.Body;
-import actor.utils.Boundary;
 import actor.utils.V2d;
 
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -42,12 +40,12 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
     public Receive<BodyMsg> createReceive() {
         return newReceiveBuilder()
                 .onMessage(ComputePositionsMsg.class, this::onComputationRequest)
-                .onMessage(StopActor.class, this::onStop)
+                .onMessage(StopActorMsg.class, this::onStop)
                 .build();
     }
 
     //termination of the actor
-    private Behavior<BodyMsg> onStop(final StopActor msg) {
+    private Behavior<BodyMsg> onStop(final StopActorMsg msg) {
         return Behaviors.stopped();
     }
 
@@ -72,7 +70,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         /* check collisions with boundaries */
         this.body.checkAndSolveBoundaryCollision(msg.getBounds());
 
-        msg.getReplyTo().tell(new BodyComputationResult(this.body));
+        msg.getReplyTo().tell(new BodyComputationResultMsg(this.body));
         return this;
     }
 
