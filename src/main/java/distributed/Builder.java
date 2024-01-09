@@ -96,7 +96,7 @@ public class Builder {
 
             // Creation of the Barrack and Zone Actor System
             System.out.println("Barrack " + zoneNumber);
-            barrackZoneNode = ActorSystem.create(Behaviors.supervise(Deployer.create()).onFailure(SupervisorStrategy.restart()), CLUSTER_NAME, setClusterConfig(List.of(PATH + clusterRootPort),
+            barrackZoneNode = ActorSystem.create(Behaviors.supervise(Deployer.create()).onFailure(SupervisorStrategy.restart()), CLUSTER_NAME, setConfig(List.of(PATH + clusterRootPort),
                     clusterStructure.getPhysicalHostBarracksZones().get(zoneNumber).first(), clusterStructure.getPhysicalHostBarracksZones().get(zoneNumber).second()));
 
 
@@ -109,8 +109,6 @@ public class Builder {
             System.out.println("ZoneCoordinator " + zoneNumber);
             // Creation of the Zone Actor
             barrackZoneNode.tell(new SpawnZoneActor(idGen.getZoneId(zoneNumber), zoneNumber, city.getSensors()));
-
-
         }
     }
 
@@ -138,31 +136,6 @@ public class Builder {
 
     private static Config setConfig(final List<String> seedNodes, final String hostname, final int port) {
         final Map<String, Object> settings = new HashMap<>(initBasicConfig());
-        settings.put("akka.remote.artery.canonical.hostname", hostname);
-        settings.put("akka.remote.artery.canonical.port", port);
-        settings.put("akka.cluster.seed-nodes", seedNodes);
-        return ConfigFactory.parseMap(settings).withFallback(ConfigFactory.load());
-    }
-
-    private static Config setClusterConfig(final List<String> seedNodes, final String hostname, final int port) {
-        final Map<String, Object> settings = new HashMap<>(initBasicConfig());
-
-        /* Cluster singleton configuration */
-        settings.put("akka.cluster.roles", List.of("Controller", "Storing"));
-        settings.put("akka.cluster.singleton.singleton-name", "Supervisor");
-        settings.put("akka.cluster.singleton.role", "Controller");
-
-        settings.put("akka.cluster.singleton.hand-over-retry-interval",  "1s");
-        settings.put("akka.cluster.singleton.min-number-of-hand-over-retries", 15);
-        settings.put("akka.cluster.singleton.use-lease", "");
-        settings.put("akka.cluster.singleton.lease-retry-interval", "5s");
-
-        settings.put("akka.cluster.singleton-proxy.singleton-name", "Supervisor");
-        // The role of the cluster nodes where the singleton can be deployed
-        settings.put("akka.cluster.singleton-proxy.role", "Controller");
-        settings.put("akka.cluster.singleton-proxy.singleton-identification-interval", "1s");
-        settings.put("akka.cluster.singleton-proxy.buffer-size", 1000);
-
         settings.put("akka.remote.artery.canonical.hostname", hostname);
         settings.put("akka.remote.artery.canonical.port", port);
         settings.put("akka.cluster.seed-nodes", seedNodes);

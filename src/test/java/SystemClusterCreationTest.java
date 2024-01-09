@@ -55,9 +55,6 @@ public class SystemClusterCreationTest {
 
         Thread.sleep(10000);
 
-        Assertions.assertEquals(cluster.state().members().filter(x -> x.getRoles().contains("Controller")).size(),
-                builder.getClusterStructure().getZoneSystems().size());
-
         for (int i = 0; i < builder.getClusterStructure().getZoneSystems().size(); i++) {
             Assertions.assertTrue(cluster.state()._3().contains(builder.getClusterStructure().getZoneActorSystem(i).address()));
         }

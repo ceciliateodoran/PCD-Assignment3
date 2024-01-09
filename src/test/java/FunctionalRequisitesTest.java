@@ -1,27 +1,21 @@
-import akka.actor.PoisonPill;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
-import distributed.messages.Ping;
-import distributed.messages.Pong;
 import distributed.messages.statuses.CityStatus;
 import distributed.messages.ValueMsg;
 import distributed.messages.statuses.ZoneStatus;
-import distributed.model.actors.Barrack;
-import distributed.model.actors.CoordinatorZone;
-import distributed.model.actors.ReachableActor;
+import distributed.model.Barrack;
+import distributed.model.CoordinatorZone;
 import distributed.model.utility.IdGenerator;
-import distributed.model.actors.Sensor;
+import distributed.model.Sensor;
 import distributed.utils.Pair;
 import org.junit.ClassRule;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FunctionalRequisitesTest {
     @ClassRule public static final TestKitJunitResource testKit = new TestKitJunitResource();
@@ -77,21 +71,5 @@ public class FunctionalRequisitesTest {
         assertEquals(msg.getBarracksStatuses().size(), zones);
         assertTrue(msg.getBarracksStatuses().get(2).equals("OK") || msg.getBarracksStatuses().get(2).equals("FLOOD"));
         assertEquals(msg.getSensorStatuses().get(2).first().size(), sensorsPerZone);
-    }
-
-    /***
-     * test Supervisor gossip protocol
-     * @throws InterruptedException
-     */
-    @Test
-    public void testPong() throws InterruptedException {
-        TestProbe<ValueMsg> probe = testKit.createTestProbe();
-        IdGenerator idGen = new IdGenerator();
-        Thread.sleep(3000);
-        ActorRef<ValueMsg> sensor = testKit.spawn(Sensor.create(idGen.getSensorId(0, 0), 0, new Pair<>(0,0), 100));
-        Thread.sleep(3000);
-        sensor.tell(new Ping(probe.ref(), "test"));
-        Pong msg = probe.expectMessageClass(Pong.class);//.expectMessage(new Pong(ReachableActor.class.getSimpleName(), "test"));
-        System.out.println(msg.getPonger());
     }
 }
