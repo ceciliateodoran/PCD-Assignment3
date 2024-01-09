@@ -1,7 +1,7 @@
 package actor.utils;
 
 /*
- * This class represents a body
+ * Represent a body
  * 
  */
 public class Body {

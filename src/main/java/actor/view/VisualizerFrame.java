@@ -15,18 +15,16 @@ import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+/**
+ * Creator of the generic GUI with initial configuration
+ */
 public class VisualizerFrame extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
-
 	private JButton startButton;
-
 	private JButton stopButton;
-
 	private JTextField state;
-
 	private VisualizerPanel panel;
-
 	private ActorRef<ViewMsg> viewActorRef;
 
     public VisualizerFrame(final int w, final int h, final ActorRef<ViewMsg> viewActorRef){
@@ -87,12 +85,12 @@ public class VisualizerFrame extends JFrame implements ActionListener {
 		if (cmd.equals("start")) {
 			switchButtons();
 			this.state.setText("Running");
-			// invio del messaggio di Start al ViewActor
+			// send the Start message to the ViewActor
 			this.viewActorRef.tell(new ViewStartMsg());
 		} else if (cmd.equals("stop")) {
 			switchButtons();
 			this.state.setText("Stopped");
-			// invio del messaggio di Stop al ViewActor
+			// send the Stop message to the ViewActor
 			this.viewActorRef.tell(new ViewStopMsg());
 		}
 	}

@@ -10,7 +10,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
 /**
- * attore che si occupa di far visualizzare i valori dei Bodies
+ * Represent the View actor implementation
  */
 public class ViewActor extends AbstractBehavior<ViewMsg> {
 
@@ -18,13 +18,27 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
     private static int width;
     private boolean isRunning;
     private static ActorRef<ControllerMsg> controllerActorRef;
-    private final SimulationView viewer;
+    private final SimulationView view;
 
     private ViewActor(final ActorContext<ViewMsg> context) {
         super(context);
-        this.viewer = new SimulationView(width,height, context.getSelf());
-        this.viewer.display();
+        this.view = new SimulationView(width,height, context.getSelf());
+        this.view.display();
         this.isRunning = false;
+    }
+
+    /**
+     * Construct a new instance of the View actor and GUI
+     *
+     * @param h The height of the user interface
+     * @param w The width of the user interface
+     * @return The newly created instance of the View actor
+     */
+    public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
+        controllerActorRef = actorRef;
+        width = w;
+        height = h;
+        return Behaviors.setup(ViewActor::new);
     }
 
     @Override
@@ -37,32 +51,24 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
                 .build();
     }
 
-    /* public factory to create the View actor */
-    public static Behavior<ViewMsg> create(final ActorRef<ControllerMsg> actorRef, final int w, final int h) {
-        controllerActorRef = actorRef;
-        width = w;
-        height = h;
-        return Behaviors.setup(ViewActor::new);
-    }
-
-    /* aggiornamento GUI al termine delle iterazioni */
+    //GUI update at the end of iterations
     private Behavior<ViewMsg> onEndIterations(ControllerStopMsg msg) {
-        this.viewer.updateState("Stopped");
+        this.view.updateState("Stopped");
         controllerActorRef.tell(new ViewStopMsg());
         this.isRunning = false;
         return this;
     }
 
-    /* aggiornamento dei Bodies nella GUI */
+    //update Bodies in GUI during the simulation
     private Behavior<ViewMsg> onNewBodies(final UpdatedPositionsMsg msg) {
         if (isRunning) {
-            this.viewer.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
+            this.view.updateView(msg.getBodies(), msg.getVt(), msg.getIter(), msg.getBounds());
             controllerActorRef.tell(new IterationCompleted());
         }
         return this;
     }
 
-    /* gestione dell'evento Start */
+    //management of Start event
     private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
         //this.getContext().getLog().info("ViewActor: received start event from GUI.");
         controllerActorRef.tell(msg);
@@ -70,7 +76,7 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         return this;
     }
 
-    /* gestione dell'evento Stop */
+    //management of Stop event
     private Behavior<ViewMsg> onStop(final ViewStopMsg msg) {
         //this.getContext().getLog().info("ViewActor: received stop event from GUI.");
         controllerActorRef.tell(msg);

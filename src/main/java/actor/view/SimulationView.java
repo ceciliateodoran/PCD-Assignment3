@@ -9,6 +9,9 @@ import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+/**
+ * Manager of the graphic user interface
+ */
 public class SimulationView {
         
 	private VisualizerFrame frame;

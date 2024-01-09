@@ -1,7 +1,7 @@
 package actor.message;
 
 /**
- * messaggi che può ricevere il ViewActor
+ * Generic message for ViewActor
  */
 public interface ViewMsg {
 }
