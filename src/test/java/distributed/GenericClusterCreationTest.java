@@ -1,3 +1,5 @@
+package distributed;
+
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.cluster.typed.Cluster;
