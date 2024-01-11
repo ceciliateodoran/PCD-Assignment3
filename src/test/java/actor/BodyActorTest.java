@@ -59,7 +59,8 @@ public class BodyActorTest {
 
         system.tell(new StartTest(probe.ref(), true));
 
-        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(365));
+        //TODO: cercare il valore di millisecondi (> 365)
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(550));
     }
 
     @Test

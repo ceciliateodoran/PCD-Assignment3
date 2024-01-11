@@ -45,6 +45,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.dt = 0.001;
         this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
         this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
+        this.testMode = false;
     }
 
     private ControllerActor(final ActorContext<ControllerMsg> context, final boolean test) {
@@ -104,9 +105,9 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     //message sent by BodyActor when the new velocity and position values of the Bodies have been computed
     private Behavior<ControllerMsg> onBodyReceived(BodyComputationResultMsg msg) {
         this.bodies.add(msg.getBody());
-        if(this.bodies.size() == this.bodyActorRefList.size() && !this.testMode){
+        if(this.bodies.size() == this.bodyActorRefList.size() && !this.testMode) {
             this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
-        } else {
+        } else if (this.bodies.size() == this.bodyActorRefList.size() && this.testMode) {
             this.testActor.tell(new FakeUpdatePositionMsg(getContext().getSelf()));
         }
         return this;
