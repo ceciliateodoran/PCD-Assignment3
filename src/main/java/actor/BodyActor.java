@@ -70,7 +70,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
         /* check collisions with boundaries */
         this.body.checkAndSolveBoundaryCollision(msg.getBounds());
 
-        msg.getReplyTo().tell(new BodyComputationResultMsg(this.body));
+        msg.getReplyTo().tell(new BodyComputationResultMsg(this.body, msg.getRunNumber()));
         return this;
     }
 

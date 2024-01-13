@@ -3,7 +3,6 @@ package actor;
 import actor.message.*;
 import actor.message.test.DistributedTestResult;
 import actor.message.test.FakeIterationCompleted;
-import actor.message.test.FakeUpdatePositionMsg;
 import actor.message.test.StartTest;
 import actor.utils.Body;
 import actor.utils.BodyGenerator;
@@ -11,10 +10,12 @@ import actor.utils.Boundary;
 import actor.utils.TestActor;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.MailboxSelector;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import akka.routing.Broadcast;
 import distributed.messages.ValueMsg;
 
 import java.util.*;
@@ -39,13 +40,17 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private boolean testMode;
     private ActorRef<ValueMsg> testRef;
     private ActorRef<ValueMsg> testActor;
+    private boolean isStopped;
+    private Integer runNumber;
 
     private ControllerActor(final ActorContext<ControllerMsg> context) {
         super(context);
         this.dt = 0.001;
         this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
-        this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor");
+        this.viewActorRef = context.spawn(ViewActor.create(context.getSelf(), viewWidth, viewHeight), "viewActor", MailboxSelector.fromConfig("my-app.priority-mailbox"));
         this.testMode = false;
+        this.isStopped = true;
+        this.runNumber = 0;
     }
 
     private ControllerActor(final ActorContext<ControllerMsg> context, final boolean test) {
@@ -53,17 +58,16 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.dt = 0.001;
         this.bounds =  new Boundary(-6.0, -6.0, 6.0, 6.0);
         this.testMode = test;
+        this.runNumber = 0;
     }
 
     @Override
     public Receive<ControllerMsg> createReceive() {
         return newReceiveBuilder()
                 .onMessage(BodyComputationResultMsg.class, this::onBodyReceived)
-                .onMessage(IterationCompletedMsg.class, this::onIterationCompleted)
                 .onMessage(ViewStartMsg.class, this::onViewStart)
                 .onMessage(ViewStopMsg.class, this::onStop)
                 .onMessage(StartTest.class, this::onStartTest)
-                .onMessage(FakeIterationCompleted.class, this::onFakeIterationCompleted)
                 .build();
     }
 
@@ -104,54 +108,41 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     //message sent by BodyActor when the new velocity and position values of the Bodies have been computed
     private Behavior<ControllerMsg> onBodyReceived(BodyComputationResultMsg msg) {
-        this.bodies.add(msg.getBody());
-        if(this.bodies.size() == this.bodyActorRefList.size() && !this.testMode) {
-            this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
-        } else if (this.bodies.size() == this.bodyActorRefList.size() && this.testMode) {
-            this.testActor.tell(new FakeUpdatePositionMsg(getContext().getSelf()));
+        if(isStopped) return this;
+        if(msg.getRunNumber().equals(this.runNumber)) {
+            this.bodies.add(msg.getBody());
         }
-        return this;
-    }
 
-    //message sent to the BodyActor at the end of each iteration and to the ViewActor when all iterations are completed
-    private Behavior<ControllerMsg> onIterationCompleted(final IterationCompletedMsg msg) {
-        this.currentIter++;
-        this.vt += this.dt;
-        if(this.currentIter <= maxIter) {
-            ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
-            this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
-            this.bodies.clear();
+        if (this.bodies.size() == this.bodyActorRefList.size()) {
+            this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
+            this.currentIter++;
+            this.vt += this.dt;
+            if (this.currentIter <= maxIter) {
+                ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds, runNumber);
+                this.bodyActorRefList.forEach(bodyActor -> bodyActor.tell(requestComputation));
+                this.bodies.clear();
+            }
         }
         return this;
     }
 
     //message sent by the ViewActor when the Start button press event is captured
     private Behavior<ControllerMsg> onViewStart(final ViewStartMsg msg) {
+        this.isStopped = false;
+        this.runNumber++;
         initializeBodies();
-        ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
+        ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds, runNumber);
         this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
         this.bodies.clear();
+
         return this;
     }
 
     //message sent by the ViewActor when the Stop button press event is captured or at the end of iterations
     private Behavior<ControllerMsg> onStop(final ViewStopMsg msg) {
+        this.isStopped = true;
         this.bodyActorRefList.forEach(actor -> actor.tell(new StopActorMsg()));
         this.bodyActorRefList.clear();
-        return this;
-    }
-
-    private Behavior<ControllerMsg> onFakeIterationCompleted(FakeIterationCompleted msg) {
-        this.currentIter++;
-        this.vt += this.dt;
-        if(this.currentIter <= maxIter) {
-            ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
-            this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
-            this.bodies.clear();
-        } else { // test mode
-            testRef.tell(new DistributedTestResult(this.bodies));
-        }
-
         return this;
     }
 
@@ -163,7 +154,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         if (!msg.getNoGuiTest())
             testActor.tell(new StartTest(this.testRef, false));
 
-        ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
+        ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds, runNumber);
         this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
         this.bodies.clear();
 

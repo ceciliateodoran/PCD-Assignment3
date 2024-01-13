@@ -17,12 +17,14 @@ public class ComputePositionsMsg implements BodyMsg {
     private final List<Body> bodyList;
     private final Boundary bounds;
     private final double dt;
+    private final Integer runNumber;
 
-    public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt, final List<Body> bodyList, final Boundary bounds) {
+    public ComputePositionsMsg(final ActorRef<ControllerMsg> replyTo, final double dt, final List<Body> bodyList, final Boundary bounds, Integer runNumber) {
         this.replyTo = replyTo;
         this.dt = dt;
         this.bodyList = new ArrayList<>(bodyList);
         this.bounds = bounds;
+        this.runNumber = runNumber;
     }
 
     public ActorRef<ControllerMsg> getReplyTo() {
@@ -40,4 +42,6 @@ public class ComputePositionsMsg implements BodyMsg {
     public Boundary getBounds() {
         return bounds;
     }
+
+    public Integer getRunNumber() { return runNumber; }
 }

@@ -69,20 +69,23 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
         if (isRunning) {
             this.toDraw.addLast(msg);
             this.getContext().getSelf().tell(new DrawMsg());
-            controllerActorRef.tell(new IterationCompletedMsg());
+            //controllerActorRef.tell(new IterationCompletedMsg());
         }
         return this;
     }
 
     //draw a new iteration of Bodies and simulation environment in GUI
     private Behavior<ViewMsg> onDraw(final DrawMsg msg) {
-        UpdatedPositionsMsg toDraw = this.toDraw.remove();
-        this.view.updateView(toDraw.getBodies(), toDraw.getVt(), toDraw.getIter(), toDraw.getBounds());
+        if(!this.toDraw.isEmpty()) {
+            UpdatedPositionsMsg toDraw = this.toDraw.remove();
+            this.view.updateView(toDraw.getBodies(), toDraw.getVt(), toDraw.getIter(), toDraw.getBounds());
+        }
         return this;
     }
 
     //management of Start event
     private Behavior<ViewMsg> onStart(final ViewStartMsg msg) {
+
         //this.getContext().getLog().info("ViewActor: received start event from GUI.");
         controllerActorRef.tell(msg);
         this.isRunning = true;
@@ -91,6 +94,8 @@ public class ViewActor extends AbstractBehavior<ViewMsg> {
 
     //management of Stop event
     private Behavior<ViewMsg> onStop(final ViewStopMsg msg) {
+        System.out.println(this.toDraw.size() + " AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        this.toDraw.clear();
         //this.getContext().getLog().info("ViewActor: received stop event from GUI.");
         controllerActorRef.tell(msg);
         this.isRunning = false;
