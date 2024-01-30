@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
  */
 public class BodyActor extends AbstractBehavior<BodyMsg> {
     private static final double DISTANCE_FROM_BODY = 0.2;
-    private final Body body;
+    private final List<Body> bodies;
 
-    private BodyActor(final ActorContext<BodyMsg> context, final Body b) {
+    private BodyActor(final ActorContext<BodyMsg> context, final List<Body> b) {
         super(context);
-        this.body = b;
+        this.bodies = b;
     }
 
     /**
@@ -32,7 +32,7 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
      * @param b The body
      * @return The newly created instance of the Body actor
      */
-    public static Behavior<BodyMsg> create(final Body b) {
+    public static Behavior<BodyMsg> create(final List<Body> b) {
         return Behaviors.setup(context -> new BodyActor(context, b));
     }
 
@@ -51,26 +51,29 @@ public class BodyActor extends AbstractBehavior<BodyMsg> {
 
     //computation of the new velocity and position values for each Body
     private Behavior<BodyMsg> onComputationRequest(final ComputePositionsMsg msg) {
+        for(Body body : this.bodies) {
 
-        /* compute total force on bodies */
-        V2d totalForce = computeTotalForceOnBody(msg.getBodyList().stream()
-                .filter(body -> Math.abs(body.getPos().getX() - this.body.getPos().getX()) < 0.2 &&
-                        Math.abs(body.getPos().getY() - this.body.getPos().getY()) < 0.2 &&
-                        body.getDistanceFrom(this.body) <= DISTANCE_FROM_BODY).collect(Collectors.toList()), this.body);
 
-        /* compute instant acceleration */
-        V2d acc = new V2d(totalForce).scalarMul(1.0 / this.body.getMass());
+            /* compute total force on bodies */
+            V2d totalForce = computeTotalForceOnBody(msg.getBodyList().stream()
+                    .filter(otherBody -> Math.abs(otherBody.getPos().getX() - body.getPos().getX()) < 0.2 &&
+                            Math.abs(otherBody.getPos().getY() - body.getPos().getY()) < 0.2 &&
+                            otherBody.getDistanceFrom(body) <= DISTANCE_FROM_BODY).collect(Collectors.toList()), body);
 
-        /* update velocity */
-        this.body.updateVelocity(acc, msg.getDt());
+            /* compute instant acceleration */
+            V2d acc = new V2d(totalForce).scalarMul(1.0 / body.getMass());
 
-        /* compute bodies new pos */
-        this.body.updatePos(msg.getDt());
+            /* update velocity */
+            body.updateVelocity(acc, msg.getDt());
 
-        /* check collisions with boundaries */
-        this.body.checkAndSolveBoundaryCollision(msg.getBounds());
+            /* compute bodies new pos */
+            body.updatePos(msg.getDt());
 
-        msg.getReplyTo().tell(new BodyComputationResultMsg(this.body, msg.getRunNumber()));
+            /* check collisions with boundaries */
+            body.checkAndSolveBoundaryCollision(msg.getBounds());
+        }
+
+        msg.getReplyTo().tell(new BodyComputationResultMsg(this.bodies, msg.getRunNumber()));
         return this;
     }
 

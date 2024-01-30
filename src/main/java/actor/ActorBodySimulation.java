@@ -12,7 +12,7 @@ public class ActorBodySimulation {
     public static void main(String[] args) {
         int width = 620;
         int height = 620;
-        int totBodies = 500;
+        int totBodies = 5000;
         int maxIter = 50000;
 
         ActorSystem.create(

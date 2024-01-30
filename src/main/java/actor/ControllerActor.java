@@ -19,6 +19,7 @@ import akka.routing.Broadcast;
 import distributed.messages.ValueMsg;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Represent the Controller actor implementation,
@@ -110,10 +111,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
     private Behavior<ControllerMsg> onBodyReceived(BodyComputationResultMsg msg) {
         if(isStopped) return this;
         if(msg.getRunNumber().equals(this.runNumber)) {
-            this.bodies.add(msg.getBody());
+            this.bodies.addAll(msg.getBody());
         }
 
-        if (this.bodies.size() == this.bodyActorRefList.size()) {
+        if (this.bodies.size() == totBodies) {
             this.viewActorRef.tell(new UpdatedPositionsMsg(this.bodies, this.vt, this.currentIter, this.bounds));
             this.currentIter++;
             this.vt += this.dt;
@@ -168,9 +169,19 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
         this.bodyActorRefList = new ArrayList<>();
         this.bodies = new ArrayList<>();
 
-        for (final Body body : bg.generateBodies(totBodies, this.bounds)) {
-            this.bodies.add(body);
-            this.bodyActorRefList.add(getContext().spawn(BodyActor.create(body), "bodyActor-" + new Random().nextInt()));
+        if(totBodies > 1000) {
+            List<Body> bodies = bg.generateBodies(totBodies, this.bounds);
+            this.bodies.addAll(bodies);
+            for(int i = 0; i < 1000; i++) {
+                final int nthActor = i;
+                List<Body> nthBodies = bodies.stream().filter(b -> b.getId() % 1000 == nthActor).collect(Collectors.toList());
+                this.bodyActorRefList.add(getContext().spawn(BodyActor.create(nthBodies), "bodyActor-" + new Random().nextInt()));
+            }
+        } else {
+            for (final Body body : bg.generateBodies(totBodies, this.bounds)) {
+                this.bodies.add(body);
+                this.bodyActorRefList.add(getContext().spawn(BodyActor.create(List.of(body)), "bodyActor-" + new Random().nextInt()));
+            }
         }
     }
 }
