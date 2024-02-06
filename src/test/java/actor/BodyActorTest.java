@@ -4,14 +4,20 @@ import actor.message.ControllerMsg;
 import actor.message.test.DistributedTestResult;
 import actor.message.test.SerialTestResult;
 import actor.message.test.StartTest;
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.MailboxSelector;
+import akka.actor.typed.javadsl.Behaviors;
+import com.typesafe.config.ConfigFactory;
 import distributed.messages.ValueMsg;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,16 +30,23 @@ public class BodyActorTest {
 
         int width = 620;
         int height = 620;
-        int totBodies = 1000;
-        int maxIter = 30;
+        int totBodies = 100;
+        int maxIter = 1000;
 
-        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
-        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
-
+        ActorSystem<ControllerMsg> system = ActorSystem.create(
+                Behaviors.setup(
+                        (ctx) -> {
+                            ctx.spawn(ControllerActor.create(totBodies, maxIter, width, height, true),
+                                    "controllerActor",
+                                    MailboxSelector.fromConfig("my-app.priority-mailbox"));
+                            return Behaviors.same();
+                        }
+                ), "system", ConfigFactory.load());
+;
         system.tell(new StartTest(probe.ref(), false));
 
-        SerialTestResult serialResultMsg = probe.expectMessageClass(SerialTestResult.class, Duration.ofSeconds(15));
-        DistributedTestResult distributedResultMsg = probe.expectMessageClass(DistributedTestResult.class, Duration.ofSeconds(15));
+        SerialTestResult serialResultMsg = probe.expectMessageClass(SerialTestResult.class, Duration.ofSeconds(25));
+        DistributedTestResult distributedResultMsg = probe.expectMessageClass(DistributedTestResult.class, Duration.ofSeconds(25));
 
         Thread.sleep(2000);
 
@@ -70,7 +83,27 @@ public class BodyActorTest {
 
     @Test
     public void test1000steps5000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 5000;
+        int maxIter = 1000;
+
+        ActorSystem<ControllerMsg> system = ActorSystem.create(
+                Behaviors.setup(
+                        (ctx) -> {
+                            ctx.spawn(ControllerActor.create(totBodies, maxIter, width, height, true),
+                                    "controllerActor",
+                                    MailboxSelector.fromConfig("my-app.priority-mailbox"));
+                            return Behaviors.same();
+                        }
+                ), "system", ConfigFactory.load());
+
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMinutes(20));
     }
 
     @Test
@@ -100,7 +133,27 @@ public class BodyActorTest {
 
     @Test
     public void test50000steps5000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 5000;
+        int maxIter = 50000;
+
+        ActorSystem<ControllerMsg> system = ActorSystem.create(
+                Behaviors.setup(
+                        (ctx) -> {
+                            ctx.spawn(ControllerActor.create(totBodies, maxIter, width, height, true),
+                                    "controllerActor",
+                                    MailboxSelector.fromConfig("my-app.priority-mailbox"));
+                            return Behaviors.same();
+                        }
+                ), "system", ConfigFactory.load());
+
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMinutes(140));
     }
 
 }

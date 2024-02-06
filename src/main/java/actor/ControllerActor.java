@@ -123,6 +123,10 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
                 this.bodyActorRefList.forEach(bodyActor -> bodyActor.tell(requestComputation));
                 this.bodies.clear();
             }
+            if (this.currentIter > maxIter && this.testMode) {
+                this.testRef.tell(new DistributedTestResult(this.bodies));
+                this.bodies.clear();
+            }
         }
         return this;
     }
@@ -149,6 +153,7 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
 
     private Behavior<ControllerMsg> onStartTest(StartTest msg) {
         this.testRef = msg.getRef();
+        this.runNumber++;
         initializeBodies();
 
         testActor = getContext().spawn(TestActor.create(this.bodies, this.bounds, maxIter, dt), "TestActor");
