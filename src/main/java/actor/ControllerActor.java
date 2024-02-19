@@ -121,6 +121,8 @@ public class ControllerActor extends AbstractBehavior<ControllerMsg> {
             ComputePositionsMsg requestComputation = new ComputePositionsMsg(getContext().getSelf(), this.dt, this.bodies, this.bounds);
             this.bodyActorRefList.forEach( bodyActor -> bodyActor.tell(requestComputation));
             this.bodies.clear();
+        } else {
+            this.viewActorRef.tell(new ControllerStopMsg());
         }
         return this;
     }
