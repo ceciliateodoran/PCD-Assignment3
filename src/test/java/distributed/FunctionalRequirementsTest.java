@@ -2,7 +2,6 @@ package distributed;
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import distributed.messages.statuses.CityStatus;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
-public class FunctionalRequisitesTest {
+public class FunctionalRequirementsTest {
     @ClassRule public static final TestKitJunitResource testKit = new TestKitJunitResource();
 
     /***
