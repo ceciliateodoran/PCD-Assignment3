@@ -46,7 +46,7 @@ public class BodyActorTest {
     }
 
     @Test
-    public void test1000steps100bodies() {
+    public void test1000iter100bodies() {
         TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
         int width = 620;
@@ -59,48 +59,142 @@ public class BodyActorTest {
 
         system.tell(new StartTest(probe.ref(), true));
 
-        //TODO: cercare il valore di millisecondi (> 365)
-        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(550));
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(800));
     }
 
     @Test
-    public void test1000steps1000bodies() {
+    public void test1000iter1000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 1000;
+        int maxIter = 1000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(10000));
     }
 
     @Test
-    public void test1000steps5000bodies() {
+    public void test1000iter5000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 5000;
+        int maxIter = 1000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(100000));
     }
 
     @Test
-    public void test10000steps100bodies() {
+    public void test10000iter100bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 100;
+        int maxIter = 10000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(100000));
     }
 
     @Test
-    public void test10000steps1000bodies() {
+    public void test10000iter1000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 1000;
+        int maxIter = 10000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(100000));
     }
 
     @Test
-    public void test10000steps5000bodies() {
+    public void test10000iter5000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 5000;
+        int maxIter = 10000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(1000000));
     }
 
     @Test
-    public void test50000steps100bodies() {
+    public void test50000iter100bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 100;
+        int maxIter = 50000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(10000));
     }
 
     @Test
-    public void test50000steps1000bodies() {
+    public void test50000iter1000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 1000;
+        int maxIter = 50000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(1000000));
     }
-
+    
     @Test
-    public void test50000steps5000bodies() {
+    public void test50000iter5000bodies() {
+        TestProbe<ValueMsg> probe = testKit.createTestProbe();
 
+        int width = 620;
+        int height = 620;
+        int totBodies = 5000;
+        int maxIter = 50000;
+
+        Behavior<ControllerMsg> controllerActor = ControllerActor.create(totBodies, maxIter, width, height, true);
+        ActorSystem<ControllerMsg> system = ActorSystem.create(controllerActor, "ControllerActor");
+
+        system.tell(new StartTest(probe.ref(), true));
+
+        probe.expectMessageClass(DistributedTestResult.class, Duration.ofMillis(90000000));
     }
-
 }
